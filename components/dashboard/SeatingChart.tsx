@@ -5,11 +5,9 @@ import {
   Users,
   AlertTriangle,
   CheckCircle2,
-  Plus,
   X,
-  Sparkles,
+  Heart,
   LayoutGrid,
-  ChevronDown,
 } from "lucide-react";
 import { Table, Guest } from "@/lib/types";
 
@@ -21,10 +19,9 @@ interface SeatingChartProps {
 }
 
 export function SeatingChart({ tables, guests, eventId, onRefresh }: SeatingChartProps) {
-  const [selectedTableId, setSelectedTableId] = useState<string | null>(null);
   const [isAssigning, setIsAssigning] = useState(false);
 
-  // Group guests by table
+  // Group unassigned confirmed guests
   const unassignedGuests = guests.filter((g) => !g.tableId && g.status === "CONFIRMED");
 
   const handleAssign = async (guestToken: string, tableId: string | null) => {
@@ -47,25 +44,24 @@ export function SeatingChart({ tables, guests, eventId, onRefresh }: SeatingChar
   };
 
   return (
-    <div className="rounded-3xl bg-white border border-carbon-200 shadow-sm p-4 sm:p-6">
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between pb-6 border-b border-carbon-100 gap-4">
+    <div className="rounded-3xl bg-white border border-[#E8DFC8] shadow-sm p-4 sm:p-6">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between pb-6 border-b border-[#E8DFC8]/60 gap-4">
         <div>
-          <div className="flex items-center gap-2 text-champagne-700 text-xs font-semibold uppercase tracking-widest mb-1">
-            <LayoutGrid className="w-4 h-4" />
-            <span>Seating Plan &amp; Protocolo</span>
+          <div className="flex items-center gap-2 text-[#7A5C30] text-xs font-serif italic mb-1">
+            <Heart className="w-4 h-4 fill-[#C5A059] text-[#C5A059]" />
+            <span>Acomodo &amp; Hospitalidad</span>
           </div>
-          <h3 className="font-serif italic text-2xl sm:text-3xl text-carbon-900 font-semibold">
-            Distribución de Mesas en Convento de las Capuchinas
+          <h3 className="font-serif italic text-2xl sm:text-3xl text-carbon-900 font-bold">
+            Acomodo de Mesas en el Jardín
           </h3>
-          <p className="text-xs text-carbon-500 mt-0.5">
-            Asigna familias confirmadas controlando en vivo la capacidad de cada mesa.
+          <p className="text-xs text-carbon-500 mt-0.5 font-sans">
+            Ubica con cariño a cada familia asegurando que disfruten junto a sus personas favoritas.
           </p>
         </div>
 
         {/* Unassigned count pill */}
-        <div className="px-3.5 py-1.5 rounded-2xl bg-amber-50 border border-amber-200 text-amber-900 text-xs font-semibold flex items-center gap-2">
-          <AlertTriangle className="w-4 h-4 text-amber-600" />
-          <span>{unassignedGuests.length} familias confirmadas sin mesa</span>
+        <div className="px-4 py-2 rounded-2xl bg-[#F3EBDD] border border-[#DFC9A6] text-[#7A5C30] text-xs font-serif italic flex items-center gap-2">
+          <span>{unassignedGuests.length} familias confirmadas por ubicar</span>
         </div>
       </div>
 
@@ -85,33 +81,33 @@ export function SeatingChart({ tables, guests, eventId, onRefresh }: SeatingChar
               key={table.tableId}
               className={`p-5 rounded-3xl border transition-all ${
                 isOverbooked
-                  ? "bg-red-50/50 border-red-300"
+                  ? "bg-red-50/60 border-red-300"
                   : isFull
-                  ? "bg-emerald-50/30 border-emerald-300"
-                  : "bg-alabaster-50/80 border-champagne-300/60 hover:border-champagne-500"
+                  ? "bg-emerald-50/40 border-emerald-300"
+                  : "bg-[#FAF7F2] border-[#DFC9A6] hover:border-[#C5A059]"
               }`}
             >
               {/* Table Header */}
               <div className="flex items-start justify-between gap-2 mb-3">
                 <div>
-                  <span className="text-[10px] font-semibold uppercase tracking-wider text-carbon-500">
-                    {table.type === "IMPERIAL" ? "Mesa Imperial Rectangular" : "Mesa Redonda"}
+                  <span className="text-[10px] font-serif italic text-carbon-500 block">
+                    {table.type === "IMPERIAL" ? "Mesa Imperial" : "Mesa Redonda"}
                   </span>
-                  <h4 className="font-serif text-xl font-bold text-carbon-900">
+                  <h4 className="font-serif italic text-xl font-bold text-carbon-900">
                     {table.name}
                   </h4>
                 </div>
 
                 <div
-                  className={`px-2.5 py-1 rounded-full text-xs font-bold border ${
+                  className={`px-3 py-1 rounded-full text-xs font-serif italic border ${
                     isOverbooked
                       ? "bg-red-100 text-red-800 border-red-300"
                       : isFull
-                      ? "bg-emerald-100 text-emerald-800 border-emerald-300"
-                      : "bg-champagne-100 text-champagne-900 border-champagne-300"
+                      ? "bg-emerald-100 text-emerald-800 border-emerald-300 font-bold"
+                      : "bg-[#F3EBDD] text-[#7A5C30] border-[#DECDB3]"
                   }`}
                 >
-                  {occupiedSeats} / {table.capacity}
+                  {occupiedSeats} / {table.capacity} lugares
                 </div>
               </div>
 
@@ -119,7 +115,7 @@ export function SeatingChart({ tables, guests, eventId, onRefresh }: SeatingChar
               <div className="w-full h-1.5 rounded-full bg-carbon-200 overflow-hidden mb-4">
                 <div
                   className={`h-full transition-all duration-300 ${
-                    isOverbooked ? "bg-red-500" : isFull ? "bg-emerald-600" : "bg-champagne-500"
+                    isOverbooked ? "bg-red-500" : isFull ? "bg-emerald-600" : "bg-[#C5A059]"
                   }`}
                   style={{ width: `${Math.min(100, (occupiedSeats / table.capacity) * 100)}%` }}
                 />
@@ -128,21 +124,21 @@ export function SeatingChart({ tables, guests, eventId, onRefresh }: SeatingChar
               {/* Assigned Guests List */}
               <div className="space-y-2 mb-4 max-h-40 overflow-y-auto pr-1">
                 {assignedGuests.length === 0 ? (
-                  <p className="text-xs text-carbon-400 italic py-2 text-center">
-                    Mesa disponible (sin invitados asignados)
+                  <p className="text-xs text-carbon-400 font-serif italic py-3 text-center">
+                    Mesa libre (sin invitados asignados aún)
                   </p>
                 ) : (
                   assignedGuests.map((g) => (
                     <div
                       key={g.guestToken}
-                      className="p-2 rounded-xl bg-white border border-carbon-200 flex items-center justify-between text-xs"
+                      className="p-2.5 rounded-xl bg-white border border-[#E8DFC8] flex items-center justify-between text-xs"
                     >
                       <div className="truncate mr-2">
-                        <span className="font-semibold text-carbon-900 block truncate">
+                        <span className="font-serif italic font-bold text-carbon-900 block truncate">
                           {g.familyName}
                         </span>
-                        <span className="text-[10px] text-carbon-500">
-                          {g.confirmedSeats || g.maxSeats} pases
+                        <span className="text-[10px] text-carbon-500 font-sans">
+                          {g.confirmedSeats || g.maxSeats} personas
                         </span>
                       </div>
 
@@ -150,7 +146,7 @@ export function SeatingChart({ tables, guests, eventId, onRefresh }: SeatingChar
                         onClick={() => handleAssign(g.guestToken, null)}
                         disabled={isAssigning}
                         className="text-carbon-400 hover:text-red-600 p-1 rounded-lg transition-colors"
-                        title="Desasignar de esta mesa"
+                        title="Mover de esta mesa"
                       >
                         <X className="w-3.5 h-3.5" />
                       </button>
@@ -161,7 +157,7 @@ export function SeatingChart({ tables, guests, eventId, onRefresh }: SeatingChar
 
               {/* Assign Guest Dropdown */}
               {!isFull && unassignedGuests.length > 0 && (
-                <div className="pt-2 border-t border-carbon-200/60">
+                <div className="pt-2 border-t border-[#DFC9A6]/50">
                   <select
                     disabled={isAssigning}
                     defaultValue=""
@@ -170,14 +166,14 @@ export function SeatingChart({ tables, guests, eventId, onRefresh }: SeatingChar
                         handleAssign(e.target.value, table.tableId);
                       }
                     }}
-                    className="w-full px-2.5 py-1.5 rounded-xl border border-champagne-300 bg-white text-xs text-carbon-800 font-medium focus:outline-none"
+                    className="w-full px-3 py-2 rounded-xl border border-[#DFC9A6] bg-white text-xs text-carbon-800 font-serif italic focus:outline-none"
                   >
                     <option value="" disabled>
                       + Sentar familia en esta mesa...
                     </option>
                     {unassignedGuests.map((ug) => (
                       <option key={ug.guestToken} value={ug.guestToken}>
-                        {ug.familyName} ({ug.confirmedSeats || ug.maxSeats} pases)
+                        {ug.familyName} ({ug.confirmedSeats || ug.maxSeats} lugares)
                       </option>
                     ))}
                   </select>

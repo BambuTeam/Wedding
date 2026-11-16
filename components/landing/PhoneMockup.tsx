@@ -1,258 +1,206 @@
 "use client";
 
 import React, { useState } from "react";
+import Link from "next/link";
 import { motion, AnimatePresence } from "framer-motion";
 import {
-  Mail,
-  CheckCircle2,
-  MapPin,
-  QrCode,
-  Sparkles,
   Heart,
+  Sparkles,
   Calendar,
-  Clock,
-  ShieldCheck,
-  Send,
-  Users,
+  MapPin,
+  Check,
+  ArrowRight,
+  Music,
+  CheckCircle2,
 } from "lucide-react";
 import { QRCodeSVG } from "qrcode.react";
 
 export function PhoneMockup() {
-  const [activeTab, setActiveTab] = useState<"sobre" | "rsvp" | "mesas" | "qr">("sobre");
+  const [isOpened, setIsOpened] = useState(false);
 
   return (
-    <div className="relative mx-auto w-full max-w-[340px] sm:max-w-[370px]">
-      {/* Floating iOS Notifications */}
+    <div className="relative mx-auto w-full max-w-[340px] sm:max-w-[380px]">
+      {/* Warm emotional floating notification 1 */}
       <motion.div
         initial={{ y: 20, opacity: 0 }}
         animate={{ y: 0, opacity: 1 }}
-        transition={{ delay: 0.8, duration: 0.5 }}
-        className="absolute -top-6 -left-6 sm:-left-12 z-30 p-3 rounded-2xl bg-white/90 backdrop-blur-xl border border-champagne-300 shadow-luxury text-left max-w-[220px]"
+        transition={{ delay: 0.6, duration: 0.6 }}
+        className="absolute -top-6 -left-4 sm:-left-8 z-30 p-3 sm:p-3.5 rounded-2xl bg-white/95 backdrop-blur-xl border border-[#E8DFC8] shadow-luxury text-left max-w-[240px]"
       >
-        <div className="flex items-center gap-1.5 text-[10px] text-zinc-500 font-medium">
-          <span className="w-1.5 h-1.5 rounded-full bg-blue-500" />
-          <span>Tracking en Vivo • hace 2 min</span>
+        <div className="flex items-center gap-1.5 text-[10px] text-emerald-800 font-medium">
+          <CheckCircle2 className="w-3.5 h-3.5 text-emerald-600" />
+          <span>Confirmación recibida</span>
         </div>
-        <p className="text-xs font-bold text-carbon-900 mt-0.5">
-          Familia Rivas abrió el sobre
+        <p className="text-xs font-semibold text-carbon-900 mt-1 leading-snug">
+          &ldquo;Tía Marta confirmó: ¡Qué alegría acompañarlos! · 2 lugares&rdquo;
         </p>
       </motion.div>
 
+      {/* Warm emotional floating notification 2 */}
       <motion.div
         initial={{ y: -20, opacity: 0 }}
         animate={{ y: 0, opacity: 1 }}
-        transition={{ delay: 1.2, duration: 0.5 }}
-        className="absolute -bottom-6 -right-6 sm:-right-10 z-30 p-3 rounded-2xl bg-carbon-900/90 text-white backdrop-blur-xl border border-champagne-500/40 shadow-luxury text-left max-w-[220px]"
+        transition={{ delay: 1.1, duration: 0.6 }}
+        className="absolute -bottom-6 -right-4 sm:-right-8 z-30 p-3 sm:p-3.5 rounded-2xl bg-[#1E1C1A]/95 text-white backdrop-blur-xl border border-[#C5A059]/40 shadow-luxury text-left max-w-[230px]"
       >
-        <div className="flex items-center gap-1.5 text-[10px] text-emerald-400 font-medium">
-          <ShieldCheck className="w-3 h-3" />
-          <span>Control Puerta • hace 30s</span>
+        <div className="flex items-center gap-1.5 text-[10px] text-[#DFC07D] font-medium">
+          <Heart className="w-3 h-3 fill-[#DFC07D]" />
+          <span>Pase listo en puerta</span>
         </div>
-        <p className="text-xs font-semibold text-zinc-100 mt-0.5">
-          Pase QR escaneado y validado
+        <p className="text-xs font-serif italic text-zinc-100 mt-0.5">
+          Mesa 1 — Claustro de las Capuchinas
         </p>
       </motion.div>
 
       {/* iPhone Outer Hardware Frame */}
-      <div className="relative rounded-[48px] p-3.5 bg-gradient-to-b from-[#3A3D40] via-[#1E2022] to-[#121314] shadow-2xl border-4 border-[#52575D]">
-        {/* Notch / Dynamic Island */}
-        <div className="absolute top-6 left-1/2 -translate-x-1/2 w-28 h-5 bg-black rounded-full z-20 flex items-center justify-end pr-2.5">
-          <div className="w-2.5 h-2.5 rounded-full bg-[#181A1C] border border-[#2B2E33]" />
+      <div className="relative rounded-[50px] p-3.5 bg-gradient-to-b from-[#403B35] via-[#24211D] to-[#171513] shadow-2xl border-4 border-[#5E564D]">
+        {/* Notch / Speaker */}
+        <div className="absolute top-6 left-1/2 -translate-x-1/2 w-28 h-5 bg-[#0F0E0C] rounded-full z-20 flex items-center justify-end pr-2.5">
+          <div className="w-2.5 h-2.5 rounded-full bg-[#1F1D1A] border border-[#3A3630]" />
         </div>
 
         {/* Inner Screen */}
-        <div className="relative h-[620px] rounded-[38px] overflow-hidden bg-alabaster-100 flex flex-col justify-between pt-8 pb-3 px-3 shadow-inner text-carbon-900 select-none">
-          {/* Mock Status Bar */}
-          <div className="flex items-center justify-between text-[11px] font-semibold text-carbon-800 px-4 mb-2">
+        <div className="relative h-[620px] rounded-[40px] overflow-hidden bg-[#FAF7F2] flex flex-col justify-between pt-8 pb-3 px-3 shadow-inner text-carbon-900 select-none">
+          {/* Status Bar */}
+          <div className="flex items-center justify-between text-[11px] font-medium text-carbon-700 px-4 mb-2">
             <span>9:41</span>
             <div className="flex items-center gap-1.5">
-              <span className="text-[10px]">5G</span>
+              <span className="text-[10px]">Antigua</span>
               <div className="w-4 h-2 rounded-sm border border-carbon-800 flex items-center p-0.5">
                 <div className="w-full h-full bg-carbon-800 rounded-2xs" />
               </div>
             </div>
           </div>
 
-          {/* Interactive Mock Content Area */}
-          <div className="flex-1 overflow-hidden relative rounded-2xl bg-white shadow-sm border border-carbon-200/60 p-4 flex flex-col justify-between">
+          {/* Screen Content: The Artisanal Envelope */}
+          <div className="flex-1 overflow-hidden relative rounded-2xl bg-[#F5EFE6] border border-[#E0D4BE] p-4 flex flex-col justify-between shadow-inner">
             <AnimatePresence mode="wait">
-              {activeTab === "sobre" && (
+              {!isOpened ? (
+                /* Closed Envelope with Wax Seal */
                 <motion.div
-                  key="sobre"
-                  initial={{ opacity: 0, scale: 0.95 }}
-                  animate={{ opacity: 1, scale: 1 }}
+                  key="closed"
+                  initial={{ opacity: 0 }}
+                  animate={{ opacity: 1 }}
                   exit={{ opacity: 0, scale: 0.95 }}
-                  className="h-full flex flex-col items-center justify-center text-center p-2"
+                  className="h-full flex flex-col items-center justify-between text-center py-4"
                 >
-                  <span className="text-[10px] uppercase tracking-widest text-champagne-700 font-semibold mb-2">
-                    Sobre Digital de Lujo
-                  </span>
-                  <div className="p-4 rounded-2xl bg-alabaster-100 border border-champagne-300 w-full mb-4 shadow-sm">
-                    <p className="font-serif italic text-2xl font-bold text-carbon-900">
+                  <div className="pt-2">
+                    <span className="font-serif italic text-lg text-[#8C6D46] tracking-widest block">
+                      C &amp; A
+                    </span>
+                    <span className="text-[10px] uppercase tracking-[0.25em] text-carbon-500 font-sans mt-0.5 block">
+                      Una invitación especial
+                    </span>
+                  </div>
+
+                  {/* Envelope Body Card */}
+                  <div className="w-full p-5 rounded-2xl bg-[#FCFAF7] border border-[#E5DAC6] shadow-sm my-auto">
+                    <span className="text-[10px] uppercase tracking-wider text-carbon-400 font-sans block mb-1">
+                      Con todo nuestro cariño para
+                    </span>
+                    <h3 className="font-serif italic text-2xl font-bold text-carbon-900 leading-tight">
                       Familia Rivas Molina
+                    </h3>
+                    <div className="mt-3 inline-block px-3 py-1 rounded-full bg-[#F3EBDD] text-[#7A5C30] text-[11px] font-serif italic border border-[#DECDB3]">
+                      4 lugares reservados
+                    </div>
+                  </div>
+
+                  {/* Golden Wax Seal */}
+                  <div className="flex flex-col items-center">
+                    <button
+                      onClick={() => setIsOpened(true)}
+                      className="group relative w-18 h-18 sm:w-20 sm:h-20 rounded-full bg-gradient-to-tr from-[#947239] via-[#C5A059] to-[#E5C686] text-carbon-950 shadow-gold wax-glow flex items-center justify-center cursor-pointer border-2 border-[#FAF4E6] hover:scale-105 active:scale-95 transition-transform"
+                      title="Toca para abrir la carta"
+                    >
+                      <div className="w-14 h-14 sm:w-16 sm:h-16 rounded-full border border-dashed border-[#FAF4E6]/60 flex flex-col items-center justify-center">
+                        <span className="font-serif font-bold italic text-xl text-carbon-950">
+                          A
+                        </span>
+                        <Heart className="w-2.5 h-2.5 text-carbon-950 fill-carbon-950/40" />
+                      </div>
+                    </button>
+                    <span className="text-[10px] text-carbon-500 uppercase tracking-widest font-sans font-medium mt-3 animate-pulse">
+                      Toca el lacre para abrir
+                    </span>
+                  </div>
+
+                  <p className="text-[10px] text-carbon-400 font-serif italic pb-1">
+                    Convento de las Capuchinas • Antigua Guatemala
+                  </p>
+                </motion.div>
+              ) : (
+                /* Opened Letter View */
+                <motion.div
+                  key="opened"
+                  initial={{ opacity: 0, y: 20 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  exit={{ opacity: 0 }}
+                  className="h-full flex flex-col justify-between py-2 text-center"
+                >
+                  <div className="space-y-3">
+                    <div className="flex items-center justify-between text-[10px] text-carbon-500 uppercase tracking-wider border-b border-[#E0D4BE] pb-2">
+                      <span>Nuestra Boda</span>
+                      <button
+                        onClick={() => setIsOpened(false)}
+                        className="text-[#947239] hover:underline"
+                      >
+                        Cerrar sobre
+                      </button>
+                    </div>
+
+                    <h4 className="font-serif italic text-3xl font-bold text-carbon-900 leading-tight">
+                      Camila &amp; Andrés
+                    </h4>
+
+                    <p className="font-serif italic text-xs text-carbon-600 px-2 leading-relaxed">
+                      &ldquo;Un sí para siempre entre muros coloniales y aroma a azahar. Nos llena el corazón celebrar contigo.&rdquo;
                     </p>
-                    <span className="text-[11px] text-carbon-500 block mt-1">
-                      4 Lugares Exclusivos
-                    </span>
-                  </div>
 
-                  {/* Wax seal */}
-                  <div className="w-16 h-16 rounded-full bg-gradient-to-tr from-[#9A7B3E] to-[#DFC07D] shadow-gold flex items-center justify-center border-2 border-white mb-3 cursor-pointer">
-                    <span className="font-serif font-bold italic text-lg text-carbon-950">
-                      A
-                    </span>
-                  </div>
-                  <span className="text-[10px] text-carbon-400 uppercase tracking-wider font-semibold">
-                    Toca para romper el sello
-                  </span>
-                </motion.div>
-              )}
-
-              {activeTab === "rsvp" && (
-                <motion.div
-                  key="rsvp"
-                  initial={{ opacity: 0, scale: 0.95 }}
-                  animate={{ opacity: 1, scale: 1 }}
-                  exit={{ opacity: 0, scale: 0.95 }}
-                  className="h-full flex flex-col justify-between p-1"
-                >
-                  <div>
-                    <span className="text-[10px] font-semibold text-champagne-700 uppercase tracking-widest block mb-1">
-                      RSVP Inteligente
-                    </span>
-                    <h4 className="font-serif italic text-xl font-bold text-carbon-900">
-                      Confirmación de Pases
-                    </h4>
-                    <p className="text-[11px] text-carbon-500 mt-1">
-                      Máximo permitido: 4 personas
-                    </p>
-
-                    <div className="mt-4 p-3 rounded-xl bg-champagne-50 border border-champagne-300 flex items-center justify-between">
-                      <span className="text-xs font-semibold text-carbon-800">Lugares a asistir:</span>
-                      <span className="font-serif text-xl font-bold text-champagne-800">4 de 4</span>
+                    <div className="p-3 rounded-xl bg-white border border-[#E5DAC6] text-left text-xs space-y-1.5 shadow-sm">
+                      <div className="flex items-center gap-1.5 font-serif font-bold text-carbon-800">
+                        <Calendar className="w-3.5 h-3.5 text-champagne-600" />
+                        <span>Sábado, 28 de Noviembre</span>
+                      </div>
+                      <div className="flex items-center gap-1.5 text-[11px] text-carbon-600">
+                        <MapPin className="w-3.5 h-3.5 text-champagne-600" />
+                        <span>Convento de las Capuchinas, Antigua</span>
+                      </div>
                     </div>
 
-                    <div className="mt-3 p-2.5 rounded-xl bg-alabaster-100 border border-carbon-200 text-[11px] text-carbon-600">
-                      🥗 1 Menú celíaco / sin gluten
+                    {/* QR Welcome Pass Card */}
+                    <div className="p-2.5 rounded-xl bg-[#1E1C1A] text-white flex items-center justify-between text-left">
+                      <div>
+                        <span className="text-[9px] uppercase tracking-wider text-[#DFC07D] font-sans block">
+                          Tu pase de bienvenida
+                        </span>
+                        <span className="font-serif italic text-sm font-bold text-white block">
+                          Familia Rivas Molina
+                        </span>
+                        <span className="text-[10px] text-zinc-400">
+                          Mesa 1 • 4 personas
+                        </span>
+                      </div>
+                      <div className="bg-white p-1 rounded-lg">
+                        <QRCodeSVG value="https://aurea.lat" size={44} />
+                      </div>
                     </div>
                   </div>
 
-                  <div className="w-full py-2.5 rounded-xl bg-champagne-500 text-carbon-950 font-bold text-xs text-center shadow-gold">
-                    ✓ Confirmado y Pase Generado
-                  </div>
-                </motion.div>
-              )}
-
-              {activeTab === "mesas" && (
-                <motion.div
-                  key="mesas"
-                  initial={{ opacity: 0, scale: 0.95 }}
-                  animate={{ opacity: 1, scale: 1 }}
-                  exit={{ opacity: 0, scale: 0.95 }}
-                  className="h-full flex flex-col justify-between p-1"
-                >
-                  <div>
-                    <span className="text-[10px] font-semibold text-champagne-700 uppercase tracking-widest block mb-1">
-                      Kit del Día • Seating
-                    </span>
-                    <h4 className="font-serif italic text-xl font-bold text-carbon-900">
-                      Tu Mesa en la Boda
-                    </h4>
-
-                    <div className="mt-4 p-4 rounded-2xl bg-gradient-to-br from-carbon-900 to-carbon-950 text-white border border-champagne-500/40 text-center">
-                      <span className="text-[10px] text-champagne-400 uppercase tracking-wider block">
-                        Mesa Asignada
-                      </span>
-                      <p className="font-serif italic text-2xl font-bold text-white mt-1">
-                        Mesa 1 — Claustro
-                      </p>
-                      <span className="text-[11px] text-zinc-400 mt-1 block">
-                        Junto a la fuente central del claustro
-                      </span>
-                    </div>
-                  </div>
-
-                  <div className="p-2.5 rounded-xl bg-emerald-50 border border-emerald-200 text-emerald-800 text-[11px] text-center font-medium">
-                    📍 Wi-Fi: Capuchinas_Eventos_5G
-                  </div>
-                </motion.div>
-              )}
-
-              {activeTab === "qr" && (
-                <motion.div
-                  key="qr"
-                  initial={{ opacity: 0, scale: 0.95 }}
-                  animate={{ opacity: 1, scale: 1 }}
-                  exit={{ opacity: 0, scale: 0.95 }}
-                  className="h-full flex flex-col items-center justify-between text-center p-1"
-                >
-                  <div>
-                    <span className="text-[10px] font-semibold text-champagne-700 uppercase tracking-widest block">
-                      Acceso Rápido
-                    </span>
-                    <h4 className="font-serif italic text-xl font-bold text-carbon-900">
-                      Pase QR VIP
-                    </h4>
-                  </div>
-
-                  <div className="p-3 bg-white rounded-2xl border-2 border-champagne-400 shadow-inner">
-                    <QRCodeSVG
-                      value="https://aurea.lat/invitacion/rivas-molina"
-                      size={135}
-                    />
-                  </div>
-
-                  <div className="w-full">
-                    <span className="text-[10px] font-mono text-carbon-400 uppercase block mb-1">
-                      TOKEN: rivas-molina
-                    </span>
-                    <div className="w-full py-2 rounded-xl bg-emerald-600 text-white font-bold text-[11px]">
-                      Enviar respaldo por WhatsApp
-                    </div>
-                  </div>
+                  <Link
+                    href="/invitacion/rivas-molina"
+                    className="w-full py-2.5 rounded-xl bg-gradient-to-r from-[#947239] to-[#C5A059] text-carbon-950 font-bold text-xs shadow-gold hover:opacity-95 transition-opacity flex items-center justify-center gap-1.5"
+                  >
+                    <span>Ver invitación completa</span>
+                    <ArrowRight className="w-3.5 h-3.5" />
+                  </Link>
                 </motion.div>
               )}
             </AnimatePresence>
           </div>
 
-          {/* Interactive Screen Tabs */}
-          <div className="mt-3 grid grid-cols-4 gap-1 p-1 rounded-2xl bg-carbon-200/70 text-[10px] font-semibold text-carbon-700">
-            <button
-              onClick={() => setActiveTab("sobre")}
-              className={`py-1.5 rounded-xl transition-all ${
-                activeTab === "sobre" ? "bg-white text-carbon-900 shadow-sm font-bold" : ""
-              }`}
-            >
-              Sobre
-            </button>
-            <button
-              onClick={() => setActiveTab("rsvp")}
-              className={`py-1.5 rounded-xl transition-all ${
-                activeTab === "rsvp" ? "bg-white text-carbon-900 shadow-sm font-bold" : ""
-              }`}
-            >
-              RSVP
-            </button>
-            <button
-              onClick={() => setActiveTab("mesas")}
-              className={`py-1.5 rounded-xl transition-all ${
-                activeTab === "mesas" ? "bg-white text-carbon-900 shadow-sm font-bold" : ""
-              }`}
-            >
-              Mesas
-            </button>
-            <button
-              onClick={() => setActiveTab("qr")}
-              className={`py-1.5 rounded-xl transition-all ${
-                activeTab === "qr" ? "bg-white text-carbon-900 shadow-sm font-bold" : ""
-              }`}
-            >
-              Pase QR
-            </button>
-          </div>
-
           {/* Bottom Home Indicator */}
-          <div className="w-32 h-1 bg-carbon-400 rounded-full mx-auto mt-2" />
+          <div className="w-28 h-1 bg-carbon-400 rounded-full mx-auto mt-2" />
         </div>
       </div>
     </div>

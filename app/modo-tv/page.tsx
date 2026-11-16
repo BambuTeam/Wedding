@@ -3,13 +3,10 @@
 import React, { useState, useEffect } from "react";
 import { QRCodeSVG } from "qrcode.react";
 import {
-  Sparkles,
   Camera,
-  DoorOpen,
   Heart,
   Maximize2,
   Minimize2,
-  Tv,
   CheckCircle2,
 } from "lucide-react";
 import { LivePhoto, Guest, EventDashboardStats } from "@/lib/types";
@@ -37,11 +34,10 @@ export default function ModoTvPage() {
 
   useEffect(() => {
     syncData();
-    const interval = setInterval(syncData, 4000); // Poll every 4 seconds
+    const interval = setInterval(syncData, 4000);
     return () => clearInterval(interval);
   }, [eventId]);
 
-  // Slideshow rotation
   useEffect(() => {
     if (photos.length <= 1) return;
     const timer = setInterval(() => {
@@ -50,7 +46,6 @@ export default function ModoTvPage() {
     return () => clearInterval(timer);
   }, [photos]);
 
-  // Live clock
   useEffect(() => {
     const updateClock = () => {
       const now = new Date();
@@ -79,28 +74,28 @@ export default function ModoTvPage() {
   const kitUrl = typeof window !== "undefined" ? `${window.location.origin}/kit-del-dia` : "";
 
   return (
-    <div className="fixed inset-0 z-50 bg-[#0A0A0C] text-white flex flex-col justify-between overflow-hidden p-6 sm:p-10 select-none">
+    <div className="fixed inset-0 z-50 bg-[#12110F] text-white flex flex-col justify-between overflow-hidden p-6 sm:p-10 select-none">
       {/* Top Ambient Bar */}
       <div className="flex items-center justify-between pb-6 border-b border-white/10 z-20">
         <div className="flex items-center gap-3">
-          <div className="w-3 h-3 rounded-full bg-emerald-400 animate-ping" />
+          <Heart className="w-4 h-4 fill-[#C5A059] text-[#C5A059] animate-pulse" />
           <div>
-            <span className="text-[11px] font-semibold uppercase tracking-[0.25em] text-champagne-400">
+            <span className="text-[11px] font-serif italic tracking-[0.25em] text-[#DFC07D] uppercase">
               Convento de las Capuchinas • Antigua Guatemala
             </span>
             <h1 className="font-serif italic text-3xl sm:text-5xl text-white font-bold leading-none">
-              Camila <span className="text-champagne-400 font-light">&amp;</span> Andrés
+              Camila <span className="text-[#DFC07D] font-light">&amp;</span> Andrés
             </h1>
           </div>
         </div>
 
-        <div className="flex items-center gap-4">
+        <div className="flex items-center gap-5">
           <div className="text-right">
-            <span className="text-2xl sm:text-4xl font-serif font-bold text-champagne-300">
+            <span className="text-2xl sm:text-4xl font-serif font-bold text-[#DFC07D]">
               {currentTime}
             </span>
-            <span className="text-[10px] text-zinc-400 uppercase tracking-widest block font-sans">
-              Hora Colonial
+            <span className="text-[10px] text-zinc-400 font-serif italic block">
+              Hora en Antigua
             </span>
           </div>
 
@@ -114,10 +109,10 @@ export default function ModoTvPage() {
         </div>
       </div>
 
-      {/* Center Stage: Photo Slideshow + QR Interactive Corner */}
+      {/* Center Stage: Photo Slideshow + Interactive QR */}
       <div className="flex-1 my-6 grid grid-cols-1 lg:grid-cols-3 gap-8 items-center z-10 overflow-hidden">
         {/* Left: Slideshow Hero (2 Columns) */}
-        <div className="lg:col-span-2 relative h-[55vh] lg:h-[65vh] rounded-3xl overflow-hidden bg-carbon-900 border border-champagne-500/30 shadow-2xl flex items-center justify-center">
+        <div className="lg:col-span-2 relative h-[55vh] lg:h-[65vh] rounded-3xl overflow-hidden bg-[#1E1C1A] border border-[#C5A059]/40 shadow-2xl flex items-center justify-center">
           {activePhoto ? (
             <div className="relative w-full h-full">
               <img
@@ -128,48 +123,48 @@ export default function ModoTvPage() {
               <div className="absolute inset-0 bg-gradient-to-t from-black/85 via-black/20 to-transparent" />
 
               <div className="absolute bottom-6 left-6 right-6">
-                <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-champagne-500 text-carbon-950 font-bold text-xs shadow-gold mb-2">
+                <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-[#C5A059] text-carbon-950 font-bold text-xs shadow-gold mb-2 font-serif italic">
                   <Camera className="w-3.5 h-3.5" />
-                  <span>Foto en Vivo #{currentPhotoIdx + 1} de {photos.length}</span>
+                  <span>Recuerdo #{currentPhotoIdx + 1} de {photos.length}</span>
                 </span>
                 <p className="font-serif italic text-2xl sm:text-3xl text-white font-bold">
                   {activePhoto.author}
                 </p>
                 {activePhoto.message && (
-                  <p className="text-sm sm:text-base text-zinc-200 mt-1 max-w-xl">
+                  <p className="text-sm sm:text-base text-zinc-200 mt-1 max-w-xl font-serif italic">
                     &ldquo;{activePhoto.message}&rdquo;
                   </p>
                 )}
               </div>
             </div>
           ) : (
-            <div className="text-center p-8 text-zinc-400">
-              <Camera className="w-16 h-16 text-champagne-500/40 mx-auto mb-3" />
+            <div className="text-center p-8 text-zinc-400 space-y-2">
+              <Camera className="w-16 h-16 text-[#C5A059]/40 mx-auto mb-2" />
               <p className="font-serif italic text-2xl text-white">
                 Esperando las primeras fotos de los invitados...
               </p>
-              <p className="text-xs text-zinc-500 mt-1">
-                Escanea el código QR para subir una foto desde tu celular.
+              <p className="text-xs text-zinc-400 font-serif italic">
+                Apunta con tu celular al código para compartir tus recuerdos en esta pantalla.
               </p>
             </div>
           )}
         </div>
 
         {/* Right: Interactive Hall QR Code */}
-        <div className="flex flex-col items-center justify-center p-6 rounded-3xl bg-white/5 border border-champagne-500/30 backdrop-blur-md shadow-2xl text-center">
-          <span className="text-xs font-semibold uppercase tracking-widest text-champagne-400 mb-2">
-            Participa en Vivo
+        <div className="flex flex-col items-center justify-center p-6 rounded-3xl bg-white/5 border border-[#C5A059]/30 backdrop-blur-md shadow-2xl text-center space-y-3">
+          <span className="text-xs font-serif italic text-[#DFC07D] tracking-widest uppercase">
+            Participa con Nosotros
           </span>
-          <h3 className="font-serif italic text-2xl sm:text-3xl text-white font-bold mb-4">
-            Encuentra tu mesa y sube fotos a esta pantalla
+          <h3 className="font-serif italic text-2xl sm:text-3xl text-white font-bold">
+            Sube tus fotos a esta pantalla desde tu mesa
           </h3>
 
-          <div className="p-4 rounded-2xl bg-white text-carbon-950 shadow-2xl border-4 border-champagne-400 mb-4">
+          <div className="p-4 rounded-2xl bg-white text-carbon-900 shadow-2xl border-4 border-[#C5A059] my-2">
             <QRCodeSVG value={kitUrl} size={180} level="M" />
           </div>
 
-          <p className="text-xs text-zinc-400 max-w-xs leading-relaxed">
-            Apunta la cámara de tu teléfono para abrir el <strong className="text-white">Kit del Día</strong> sin descargar ninguna aplicación.
+          <p className="text-xs text-zinc-300 max-w-xs font-serif italic leading-relaxed">
+            Apunta la cámara de tu teléfono para subir fotos instantáneas y encontrar tu mesa sin descargar nada.
           </p>
         </div>
       </div>
@@ -177,36 +172,36 @@ export default function ModoTvPage() {
       {/* Bottom Live Ticker */}
       <div className="pt-4 border-t border-white/10 flex items-center justify-between text-xs z-20">
         <div className="flex items-center gap-3 overflow-hidden">
-          <div className="flex items-center gap-1.5 px-3 py-1 rounded-full bg-emerald-500/20 text-emerald-300 border border-emerald-500/30 font-bold shrink-0">
-            <DoorOpen className="w-3.5 h-3.5" />
-            <span>ÚLTIMAS LLEGADAS:</span>
+          <div className="flex items-center gap-1.5 px-3 py-1 rounded-full bg-emerald-500/20 text-emerald-300 border border-emerald-500/30 font-serif italic font-bold shrink-0">
+            <Heart className="w-3.5 h-3.5 fill-emerald-400" />
+            <span>LLEGANDO AHORA:</span>
           </div>
 
-          <div className="flex items-center gap-4 overflow-x-auto no-scrollbar text-zinc-300">
+          <div className="flex items-center gap-5 overflow-x-auto no-scrollbar text-zinc-300 font-serif italic">
             {recentCheckIns.length === 0 ? (
-              <span className="italic text-zinc-500">
-                Recepción de invitados en curso...
+              <span className="italic text-zinc-400">
+                Dando la bienvenida a las familias en la entrada...
               </span>
             ) : (
               recentCheckIns.map((g) => (
                 <span
                   key={g.guestToken}
-                  className="inline-flex items-center gap-1.5 font-medium whitespace-nowrap"
+                  className="inline-flex items-center gap-1.5 font-medium whitespace-nowrap text-sm"
                 >
-                  <CheckCircle2 className="w-3 h-3 text-emerald-400" />
-                  <strong className="text-white">{g.familyName}</strong> ({g.confirmedSeats || g.maxSeats} pases)
+                  <CheckCircle2 className="w-3.5 h-3.5 text-emerald-400" />
+                  <strong className="text-white">{g.familyName}</strong> ({g.confirmedSeats || g.maxSeats} personas)
                 </span>
               ))
             )}
           </div>
         </div>
 
-        {/* Guest counter stats */}
+        {/* Stats counter */}
         {stats && (
-          <div className="hidden sm:flex items-center gap-2 text-zinc-400 shrink-0 font-mono">
+          <div className="hidden sm:flex items-center gap-2 text-zinc-400 shrink-0 font-serif italic">
             <span>{stats.totalCheckedInSeats} personas en la fiesta</span>
             <span>•</span>
-            <span className="text-champagne-400">{photos.length} fotos proyectadas</span>
+            <span className="text-[#DFC07D]">{photos.length} fotos proyectadas</span>
           </div>
         )}
       </div>

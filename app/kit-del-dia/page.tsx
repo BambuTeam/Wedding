@@ -1,16 +1,15 @@
 "use client";
 
 import React, { useState, useEffect } from "react";
+import Link from "next/link";
 import {
+  Heart,
   PartyPopper,
   Calendar,
   MapPin,
   Sparkles,
-  Wifi,
-  Camera,
-  Utensils,
-  Clock,
   Loader2,
+  Tv,
 } from "lucide-react";
 import { EventMeta, Guest, Table } from "@/lib/types";
 import { TableFinder } from "@/components/kit/TableFinder";
@@ -55,29 +54,29 @@ export default function KitDelDiaPage() {
   if (loading || !event) {
     return (
       <div className="min-h-[70vh] flex flex-col items-center justify-center gap-3">
-        <Loader2 className="w-8 h-8 animate-spin text-champagne-600" />
-        <p className="font-serif italic text-lg text-carbon-600">
-          Cargando Kit del Día en vivo...
+        <Loader2 className="w-8 h-8 animate-spin text-[#C5A059]" />
+        <p className="font-serif italic text-xl text-carbon-700">
+          Abriendo el kit de la celebración...
         </p>
       </div>
     );
   }
 
   return (
-    <div className="max-w-5xl mx-auto px-4 sm:px-6 pb-24 space-y-12">
+    <div className="max-w-5xl mx-auto px-4 sm:px-6 pt-6 pb-28 space-y-12">
       {/* Header Banner */}
-      <section className="text-center pt-2">
-        <div className="inline-flex items-center gap-2 px-4 py-1 rounded-full bg-champagne-100 border border-champagne-300 text-champagne-800 text-xs font-semibold uppercase tracking-widest mb-3">
-          <PartyPopper className="w-3.5 h-3.5 text-champagne-600" />
-          <span>Tu Acompañante Digital en la Boda</span>
+      <section className="text-center space-y-3">
+        <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-[#F3EBDD] border border-[#DFC9A6] text-[#7A5C30] text-xs font-serif italic tracking-wide">
+          <Heart className="w-3.5 h-3.5 fill-[#C5A059] text-[#C5A059]" />
+          <span>Tu Guía para Disfrutar la Fiesta</span>
         </div>
 
-        <h1 className="font-serif italic text-4xl sm:text-6xl text-carbon-900 font-semibold mb-2">
-          Kit del Día • {event.title}
+        <h1 className="font-serif italic text-4xl sm:text-6xl text-carbon-900 font-bold">
+          El Día de la Boda • {event.title}
         </h1>
 
-        <p className="text-xs sm:text-sm text-carbon-600 max-w-xl mx-auto">
-          Todo lo que necesitas saber durante la celebración en {event.venueName}, {event.venueCity}.
+        <p className="text-xs sm:text-base text-carbon-600 max-w-xl mx-auto font-serif italic">
+          Todo lo que necesitas saber hoy en {event.venueName}, {event.venueCity}.
         </p>
       </section>
 

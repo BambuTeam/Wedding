@@ -2,14 +2,13 @@
 
 import React, { useState } from "react";
 import {
+  Heart,
   Users,
   CheckCircle2,
   Clock,
   Eye,
   Utensils,
   DoorOpen,
-  TrendingUp,
-  AlertTriangle,
   ChevronRight,
 } from "lucide-react";
 import { EventDashboardStats } from "@/lib/types";
@@ -23,58 +22,58 @@ export function KpiCards({ stats }: KpiCardsProps) {
 
   const cards = [
     {
-      title: "Pases Asignados",
+      title: "Invitados Queridos",
       value: stats.totalSeatsAllocated,
-      subtitle: `${stats.totalFamilies} familias / invitaciones`,
-      icon: Users,
+      subtitle: `${stats.totalFamilies} familias invitadas`,
+      icon: Heart,
       color: "text-carbon-900",
       bg: "bg-white",
-      border: "border-carbon-200",
+      border: "border-[#E8DFC8]",
     },
     {
       title: "Confirmados",
       value: stats.totalSeatsConfirmed,
-      subtitle: `${Math.round((stats.totalSeatsConfirmed / (stats.totalSeatsAllocated || 1)) * 100)}% de asistencia`,
+      subtitle: `${Math.round((stats.totalSeatsConfirmed / (stats.totalSeatsAllocated || 1)) * 100)}% nos acompañarán`,
       icon: CheckCircle2,
-      color: "text-emerald-700",
-      bg: "bg-emerald-50/60",
+      color: "text-emerald-800",
+      bg: "bg-emerald-50/50",
       border: "border-emerald-200",
     },
     {
-      title: "Pendientes",
+      title: "Por Confirmar",
       value: stats.totalGuestsPending,
-      subtitle: "Por responder RSVP",
+      subtitle: "Respuestas pendientes",
       icon: Clock,
-      color: "text-amber-700",
-      bg: "bg-amber-50/60",
+      color: "text-amber-800",
+      bg: "bg-amber-50/50",
       border: "border-amber-200",
     },
     {
-      title: "Tasa de Apertura",
+      title: "Sobres Abiertos",
       value: `${stats.openRatePercentage}%`,
-      subtitle: `${stats.openedInvitationsCount} de ${stats.totalFamilies} ya abrieron el sobre`,
+      subtitle: `${stats.openedInvitationsCount} de ${stats.totalFamilies} ya abrieron su carta`,
       icon: Eye,
-      color: "text-blue-700",
-      bg: "bg-blue-50/60",
-      border: "border-blue-200",
+      color: "text-[#8C6D46]",
+      bg: "bg-[#F7F2E7]/70",
+      border: "border-[#DFC9A6]",
     },
     {
-      title: "Check-in en Puerta",
+      title: "Ya en la Fiesta",
       value: stats.totalCheckedInSeats,
-      subtitle: "Invitados ya dentro del venue",
+      subtitle: "Abrazos dados al llegar",
       icon: DoorOpen,
-      color: "text-purple-700",
-      bg: "bg-purple-50/60",
+      color: "text-purple-800",
+      bg: "bg-purple-50/50",
       border: "border-purple-200",
     },
     {
-      title: "Alergias & Cocina",
+      title: "Cuidados de Cocina",
       value: stats.dietaryRestrictionsCount,
-      subtitle: "Menús especiales requeridos",
+      subtitle: "Menús especiales / alergias",
       icon: Utensils,
-      color: "text-champagne-800",
-      bg: "bg-champagne-50/70",
-      border: "border-champagne-300",
+      color: "text-[#7A5C30]",
+      bg: "bg-[#F3EBDD]/70",
+      border: "border-[#DFC9A6]",
       clickable: true,
       onClick: () => setShowDietaryModal(true),
     },
@@ -94,7 +93,7 @@ export function KpiCards({ stats }: KpiCardsProps) {
               }`}
             >
               <div className="flex items-center justify-between mb-2">
-                <span className="text-[10px] font-semibold uppercase tracking-wider text-carbon-500">
+                <span className="text-[10px] font-serif italic text-carbon-500 uppercase tracking-wider">
                   {c.title}
                 </span>
                 <Icon className={`w-4 h-4 ${c.color}`} />
@@ -104,14 +103,14 @@ export function KpiCards({ stats }: KpiCardsProps) {
                 <span className={`text-2xl sm:text-3xl font-bold font-serif ${c.color}`}>
                   {c.value}
                 </span>
-                <p className="text-[11px] text-carbon-500 mt-0.5 leading-tight">
+                <p className="text-[11px] text-carbon-500 mt-0.5 leading-tight font-sans">
                   {c.subtitle}
                 </p>
               </div>
 
               {c.clickable && (
-                <div className="mt-2 pt-2 border-t border-champagne-200 flex items-center justify-between text-[10px] font-semibold text-champagne-700">
-                  <span>Ver detalle</span>
+                <div className="mt-2 pt-2 border-t border-[#DFC9A6]/50 flex items-center justify-between text-[10px] font-serif italic text-[#7A5C30]">
+                  <span>Ver notas del chef</span>
                   <ChevronRight className="w-3 h-3" />
                 </div>
               )}
@@ -122,13 +121,13 @@ export function KpiCards({ stats }: KpiCardsProps) {
 
       {/* Dietary Restrictions Modal */}
       {showDietaryModal && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-carbon-950/75 backdrop-blur-sm">
-          <div className="w-full max-w-lg rounded-3xl bg-white p-6 shadow-2xl border border-champagne-300">
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-[#141210]/75 backdrop-blur-sm">
+          <div className="w-full max-w-lg rounded-3xl bg-white p-6 shadow-2xl border border-[#DFC9A6]">
             <div className="flex items-center justify-between pb-3 border-b border-carbon-100">
               <div className="flex items-center gap-2">
-                <Utensils className="w-5 h-5 text-champagne-600" />
-                <h3 className="font-serif italic text-2xl text-carbon-900 font-semibold">
-                  Resumen para Chef Ejecutivo &amp; Catering
+                <Utensils className="w-5 h-5 text-[#8C6D46]" />
+                <h3 className="font-serif italic text-2xl text-carbon-900 font-bold">
+                  Notas para el Chef &amp; Banquete
                 </h3>
               </div>
               <button
@@ -141,19 +140,19 @@ export function KpiCards({ stats }: KpiCardsProps) {
 
             <div className="mt-4 max-h-[60vh] overflow-y-auto space-y-3">
               {stats.dietaryNotesList.length === 0 ? (
-                <p className="text-xs text-carbon-500 py-4 text-center">
-                  No hay requerimientos alimenticios registrados hasta el momento.
+                <p className="text-xs text-carbon-500 py-6 text-center font-serif italic">
+                  Ningún invitado ha registrado restricciones alimenticias por ahora.
                 </p>
               ) : (
                 stats.dietaryNotesList.map((item, idx) => (
                   <div
                     key={idx}
-                    className="p-3 rounded-xl bg-alabaster-50 border border-champagne-200"
+                    className="p-3.5 rounded-xl bg-[#FAF7F2] border border-[#DFC9A6]"
                   >
-                    <span className="text-xs font-bold text-carbon-900 block">
+                    <span className="text-xs font-bold text-carbon-900 font-serif italic block">
                       {item.guestName}
                     </span>
-                    <p className="text-xs text-champagne-800 mt-1 font-medium">
+                    <p className="text-xs text-[#7A5C30] mt-1 font-sans">
                       ⚠️ {item.notes}
                     </p>
                   </div>
@@ -164,9 +163,9 @@ export function KpiCards({ stats }: KpiCardsProps) {
             <div className="mt-5 pt-3 border-t border-carbon-100 flex justify-end">
               <button
                 onClick={() => setShowDietaryModal(false)}
-                className="px-4 py-2 rounded-xl bg-carbon-900 text-white text-xs font-medium"
+                className="px-5 py-2 rounded-full bg-carbon-900 text-white text-xs font-sans font-medium"
               >
-                Entendido
+                Listo
               </button>
             </div>
           </div>

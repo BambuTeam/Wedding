@@ -6,7 +6,7 @@ export function cn(...inputs: ClassValue[]) {
 }
 
 /**
- * Genera el enlace oficial de WhatsApp para enviar la invitación digital
+ * Genera el mensaje cálido y personal para enviar la carta de boda por WhatsApp
  */
 export function buildWhatsAppInviteUrl(params: {
   phone?: string;
@@ -18,12 +18,12 @@ export function buildWhatsAppInviteUrl(params: {
   const cleanPhone = (params.phone || "").replace(/[^0-9]/g, "");
   
   const text = encodeURIComponent(
-    `✨ *${params.guestName}*\n\n` +
-    `Con inmensa alegría, ${params.coupleNames} tienen el honor de invitarles a celebrar su matrimonio.\n\n` +
-    `Hemos reservado con mucho cariño *${params.maxSeats} ${params.maxSeats === 1 ? "lugar" : "lugares"}* para ustedes.\n\n` +
-    `💌 Pueden abrir su sobre digital, conocer el itinerario y confirmar su asistencia en este enlace:\n` +
+    `✨ *Querida ${params.guestName}*\n\n` +
+    `Con inmensa alegría y el corazón lleno de ilusión, ${params.coupleNames} queremos invitarles a celebrar el inicio de nuestro matrimonio.\n\n` +
+    `Hemos reservado con todo nuestro cariño *${params.maxSeats} ${params.maxSeats === 1 ? "lugar especial" : "lugares especiales"}* para ustedes.\n\n` +
+    `💌 Pueden abrir su sobre digital, conocer la historia, el lugar y confirmar su asistencia en este enlace:\n` +
     `${params.inviteUrl}\n\n` +
-    `¡Esperamos de corazón contar con su presencia!`
+    `¡Nada nos haría más felices que contar con su presencia y su abrazo en este gran día!`
   );
 
   return cleanPhone
@@ -32,7 +32,7 @@ export function buildWhatsAppInviteUrl(params: {
 }
 
 /**
- * Genera el enlace de recordatorio de RSVP por WhatsApp
+ * Genera un recordatorio afectuoso de confirmación por WhatsApp
  */
 export function buildWhatsAppReminderUrl(params: {
   phone?: string;
@@ -43,11 +43,11 @@ export function buildWhatsAppReminderUrl(params: {
   const cleanPhone = (params.phone || "").replace(/[^0-9]/g, "");
   
   const text = encodeURIComponent(
-    `Estimada *${params.guestName}*,\n\n` +
-    `Esperamos que te encuentres muy bien. ${params.coupleNames} están afinando los últimos detalles de su boda y les encantaría saber si podrán acompañarles.\n\n` +
-    `Por favor, confirma tus lugares a través de tu invitación digital:\n` +
+    `Hola *${params.guestName}*,\n\n` +
+    `Esperamos que estén muy bien. ${params.coupleNames} estamos afinando los últimos detalles con el banquete y nos encantaría saber si podrán acompañarnos en nuestra boda.\n\n` +
+    `Por favor confírmennos en su sobre digital:\n` +
     `${params.inviteUrl}\n\n` +
-    `¡Un abrazo enorme!`
+    `¡Les mandamos un abrazo con mucho cariño!`
   );
 
   return cleanPhone
@@ -62,10 +62,10 @@ export function downloadCalendarIcs(event: {
   title: string;
   description: string;
   location: string;
-  startDateIso: string; // e.g. "2026-11-28T16:30:00"
+  startDateIso: string;
 }) {
   const start = new Date(event.startDateIso);
-  const end = new Date(start.getTime() + 10 * 60 * 60 * 1000); // +10 horas de fiesta
+  const end = new Date(start.getTime() + 10 * 60 * 60 * 1000);
 
   const formatIcsDate = (d: Date) => {
     return d.toISOString().replace(/[-:]/g, "").split(".")[0] + "Z";
@@ -74,7 +74,7 @@ export function downloadCalendarIcs(event: {
   const icsContent = [
     "BEGIN:VCALENDAR",
     "VERSION:2.0",
-    "PRODID:-//AUREA//Boutique Digital Invitations//ES",
+    "PRODID:-//AUREA//Cartas de Boda con Alma//ES",
     "CALSCALE:GREGORIAN",
     "METHOD:PUBLISH",
     "BEGIN:VEVENT",

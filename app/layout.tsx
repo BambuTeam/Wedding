@@ -1,18 +1,18 @@
 import type { Metadata } from "next";
 import "./globals.css";
-import { EcosystemBar } from "@/components/navigation/EcosystemBar";
+import { Header } from "@/components/navigation/Header";
 
 export const metadata: Metadata = {
-  title: "AUREA — Boutique de Invitaciones Digitales Inteligentes & Event-Tech",
+  title: "AUREA — Invitaciones de Boda con Alma & Papelería Digital",
   description:
-    "Plataforma SaaS de invitaciones interactivas, confirmación RSVP con pases QR de alta seguridad, seating chart inteligente y kit del día para bodas de lujo en Latinoamérica.",
+    "Creamos la carta digital de tu boda desde cero, con su historia, sus fotos y el nombre de cada familia. Confirmaciones con un toque, mesas y bienvenida en calma.",
   keywords: [
-    "invitaciones digitales",
-    "boda de lujo",
-    "seating chart",
-    "control de acceso qr",
-    "wedding planner saas",
-    "antigua guatemala",
+    "invitaciones de boda digitales",
+    "boda colonial",
+    "antigua guatemala bodas",
+    "invitacion con sobre",
+    "lacre digital",
+    "seating chart boda",
   ],
 };
 
@@ -31,9 +31,9 @@ export default function RootLayout({
           rel="stylesheet"
         />
       </head>
-      <body className="min-h-screen bg-alabaster-100 text-carbon-900 font-sans selection:bg-champagne-500 selection:text-white antialiased">
-        <EcosystemBar />
-        <main className="pt-20 sm:pt-24">{children}</main>
+      <body className="min-h-screen bg-[#FAF7F2] text-[#1F1D1A] font-sans selection:bg-[#C5A059] selection:text-white antialiased">
+        <Header />
+        <main>{children}</main>
       </body>
     </html>
   );

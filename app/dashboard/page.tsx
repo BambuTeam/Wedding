@@ -1,15 +1,15 @@
 "use client";
 
 import React, { useState, useEffect } from "react";
+import Link from "next/link";
 import {
-  Sparkles,
+  Heart,
   RefreshCw,
-  LayoutDashboard,
-  Layers,
   Calendar,
   MapPin,
   ExternalLink,
   Loader2,
+  Tv,
 } from "lucide-react";
 import { EventMeta, Guest, Table, EventDashboardStats } from "@/lib/types";
 import { EventSelector } from "@/components/dashboard/EventSelector";
@@ -58,7 +58,6 @@ export default function DashboardPage() {
 
   useEffect(() => {
     loadDashboardData();
-    // Intelligent periodic polling every 10 seconds
     const interval = setInterval(() => {
       loadDashboardData();
     }, 10000);
@@ -68,18 +67,18 @@ export default function DashboardPage() {
   if (loading || !event || !stats) {
     return (
       <div className="min-h-[70vh] flex flex-col items-center justify-center gap-3">
-        <Loader2 className="w-8 h-8 animate-spin text-champagne-600" />
-        <p className="font-serif italic text-lg text-carbon-600">
-          Cargando suite operativa de Wedding Planner...
+        <Loader2 className="w-8 h-8 animate-spin text-[#C5A059]" />
+        <p className="font-serif italic text-xl text-carbon-700">
+          Abriendo el panel de la boda...
         </p>
       </div>
     );
   }
 
   return (
-    <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pb-24 space-y-8">
+    <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-6 pb-28 space-y-8">
       {/* Top Header Bar */}
-      <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4 pt-2">
+      <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4">
         <div className="flex flex-wrap items-center gap-4">
           <EventSelector
             currentEvent={event}
@@ -90,71 +89,70 @@ export default function DashboardPage() {
             }}
           />
 
-          <div className="hidden sm:flex items-center gap-2 text-xs text-carbon-500">
+          <div className="hidden sm:flex items-center gap-2 text-xs font-serif italic text-carbon-500">
             <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
-            <span>Sincronización en vivo activa</span>
+            <span>Actualizado en tiempo real</span>
           </div>
         </div>
 
         {/* Action Controls */}
-        <div className="flex items-center gap-2">
+        <div className="flex items-center gap-3">
           <button
             onClick={() => loadDashboardData(true)}
-            className="flex items-center gap-1.5 px-3.5 py-2 rounded-xl bg-white border border-carbon-200 text-carbon-700 hover:bg-carbon-50 text-xs font-semibold shadow-sm transition-all"
-            title="Recargar datos"
+            className="flex items-center gap-1.5 px-4 py-2 rounded-full bg-white border border-[#DFC9A6] text-carbon-700 hover:bg-[#FAF7F2] text-xs font-medium shadow-sm transition-all font-sans"
+            title="Refrescar lista"
           >
-            <RefreshCw className={`w-3.5 h-3.5 ${isRefreshing ? "animate-spin text-champagne-600" : ""}`} />
+            <RefreshCw className={`w-3.5 h-3.5 ${isRefreshing ? "animate-spin text-[#C5A059]" : ""}`} />
             <span>Actualizar</span>
           </button>
 
-          <a
-            href={`/invitacion/rivas-molina`}
+          <Link
+            href="/invitacion/rivas-molina"
             target="_blank"
-            rel="noopener noreferrer"
-            className="flex items-center gap-1.5 px-3.5 py-2 rounded-xl bg-carbon-800 hover:bg-carbon-900 text-champagne-200 text-xs font-semibold shadow-sm transition-all"
+            className="flex items-center gap-1.5 px-4 py-2 rounded-full bg-[#1E1C1A] text-white hover:bg-carbon-800 text-xs font-medium shadow-sm transition-all font-sans"
           >
-            <span>Ver Invitación Digital</span>
-            <ExternalLink className="w-3.5 h-3.5 text-champagne-400" />
-          </a>
+            <span>Ver carta de un invitado</span>
+            <ExternalLink className="w-3.5 h-3.5 text-[#DFC07D]" />
+          </Link>
         </div>
       </div>
 
       {/* KPI Cards Row */}
       <KpiCards stats={stats} />
 
-      {/* Main Tab Navigation */}
-      <div className="flex items-center gap-2 border-b border-carbon-200 pb-2">
+      {/* Human Tab Navigation */}
+      <div className="flex items-center gap-2 border-b border-[#E8DFC8] pb-2 font-serif italic text-base">
         <button
           onClick={() => setActiveTab("invitados")}
-          className={`px-4 py-2 rounded-xl text-xs sm:text-sm font-semibold transition-all ${
+          className={`px-5 py-2.5 rounded-2xl transition-all ${
             activeTab === "invitados"
-              ? "bg-carbon-900 text-white shadow-sm"
-              : "text-carbon-600 hover:bg-carbon-100"
+              ? "bg-[#1E1C1A] text-white shadow-sm font-bold"
+              : "text-carbon-600 hover:bg-[#FAF7F2]"
           }`}
         >
-          Lista de Invitados &amp; WhatsApp ({guests.length})
+          ¿Quiénes nos acompañan? ({guests.length})
         </button>
 
         <button
           onClick={() => setActiveTab("mesas")}
-          className={`px-4 py-2 rounded-xl text-xs sm:text-sm font-semibold transition-all ${
+          className={`px-5 py-2.5 rounded-2xl transition-all ${
             activeTab === "mesas"
-              ? "bg-carbon-900 text-white shadow-sm"
-              : "text-carbon-600 hover:bg-carbon-100"
+              ? "bg-[#1E1C1A] text-white shadow-sm font-bold"
+              : "text-carbon-600 hover:bg-[#FAF7F2]"
           }`}
         >
-          Seating Chart &amp; Mesas ({tables.length})
+          Acomodo de mesas ({tables.length})
         </button>
 
         <button
           onClick={() => setActiveTab("recepcion")}
-          className={`px-4 py-2 rounded-xl text-xs sm:text-sm font-semibold transition-all ${
+          className={`px-5 py-2.5 rounded-2xl transition-all ${
             activeTab === "recepcion"
-              ? "bg-champagne-500 text-carbon-950 font-bold shadow-gold"
-              : "text-carbon-600 hover:bg-carbon-100"
+              ? "bg-[#C5A059] text-carbon-950 font-bold shadow-gold"
+              : "text-carbon-600 hover:bg-[#FAF7F2]"
           }`}
         >
-          Recepción Puerta &amp; Escáner QR
+          Bienvenida en recepción
         </button>
       </div>
 

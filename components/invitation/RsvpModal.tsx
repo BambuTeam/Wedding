@@ -7,7 +7,7 @@ import {
   X,
   Users,
   AlertCircle,
-  MessageSquareHeart,
+  Heart,
   Sparkles,
   Loader2,
 } from "lucide-react";
@@ -53,16 +53,16 @@ export function RsvpModal({ guest, event, onSuccess, onClose }: RsvpModalProps) 
 
       const data = await response.json();
       if (!response.ok) {
-        throw new Error(data.error || "Error al registrar confirmación");
+        throw new Error(data.error || "Error al enviar tu confirmación");
       }
 
       if (status === "CONFIRMED") {
         try {
           confetti({
-            particleCount: 80,
-            spread: 70,
+            particleCount: 75,
+            spread: 60,
             origin: { y: 0.6 },
-            colors: ["#B89758", "#4A5D4E", "#DFC07D", "#ffffff"],
+            colors: ["#C5A059", "#4A5D4E", "#DFC07D", "#ffffff"],
           });
         } catch {
           // ignore
@@ -78,8 +78,8 @@ export function RsvpModal({ guest, event, onSuccess, onClose }: RsvpModalProps) 
   };
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-carbon-950/80 backdrop-blur-md">
-      <div className="relative w-full max-w-lg rounded-3xl bg-alabaster-50 border border-champagne-400/40 shadow-2xl p-6 sm:p-8 text-carbon-900 max-h-[90vh] overflow-y-auto">
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-[#141210]/80 backdrop-blur-md">
+      <div className="relative w-full max-w-lg rounded-3xl bg-[#FAF7F2] border border-[#DFC9A6] shadow-2xl p-6 sm:p-8 text-carbon-900 max-h-[90vh] overflow-y-auto">
         {/* Close Button */}
         <button
           onClick={onClose}
@@ -89,15 +89,15 @@ export function RsvpModal({ guest, event, onSuccess, onClose }: RsvpModalProps) 
         </button>
 
         {/* Header */}
-        <div className="text-center pb-4 border-b border-champagne-200">
-          <span className="text-[11px] font-semibold uppercase tracking-widest text-champagne-700">
-            Confirmación de Asistencia
+        <div className="text-center pb-4 border-b border-[#E8DFC8]">
+          <span className="text-xs font-serif italic text-[#7A5C30] tracking-widest uppercase">
+            Confirmación con el corazón
           </span>
-          <h3 className="font-serif italic text-3xl text-carbon-900 mt-0.5">
+          <h3 className="font-serif italic text-3xl text-carbon-900 font-bold mt-0.5">
             {guest.familyName}
           </h3>
-          <p className="text-xs text-carbon-500 mt-1">
-            Por favor confirma tus lugares antes del 15 de Noviembre
+          <p className="text-xs text-carbon-500 font-serif italic mt-1">
+            Por favor confírmanos antes del 15 de Noviembre para preparar cada detalle
           </p>
         </div>
 
@@ -111,55 +111,55 @@ export function RsvpModal({ guest, event, onSuccess, onClose }: RsvpModalProps) 
 
           {/* Decision Pill Selector */}
           <div>
-            <label className="block text-xs font-semibold uppercase tracking-wider text-carbon-600 mb-2">
+            <label className="block text-xs font-serif italic text-carbon-700 mb-2 text-center text-sm">
               ¿Nos acompañarás en nuestro gran día?
             </label>
             <div className="grid grid-cols-2 gap-3">
               <button
                 type="button"
                 onClick={() => setStatus("CONFIRMED")}
-                className={`p-3.5 rounded-2xl border text-xs font-semibold flex items-center justify-center gap-2 transition-all ${
+                className={`p-3.5 rounded-2xl border text-xs font-serif italic transition-all flex items-center justify-center gap-2 ${
                   status === "CONFIRMED"
-                    ? "bg-champagne-500 text-carbon-950 border-champagne-600 shadow-gold"
+                    ? "bg-[#C5A059] text-carbon-950 border-[#B88E3E] font-bold shadow-gold"
                     : "bg-white text-carbon-700 border-carbon-200 hover:bg-carbon-50"
                 }`}
               >
                 <Check className="w-4 h-4" />
-                <span>¡Sí, ahí estaré!</span>
+                <span>¡Sí, ahí estaremos!</span>
               </button>
 
               <button
                 type="button"
                 onClick={() => setStatus("DECLINED")}
-                className={`p-3.5 rounded-2xl border text-xs font-semibold flex items-center justify-center gap-2 transition-all ${
+                className={`p-3.5 rounded-2xl border text-xs font-serif italic transition-all flex items-center justify-center gap-2 ${
                   status === "DECLINED"
-                    ? "bg-carbon-800 text-white border-carbon-900 shadow-md"
+                    ? "bg-[#24211D] text-white border-carbon-900 shadow-md font-bold"
                     : "bg-white text-carbon-700 border-carbon-200 hover:bg-carbon-50"
                 }`}
               >
                 <X className="w-4 h-4" />
-                <span>No podré asistir</span>
+                <span>Brindaré desde lejos</span>
               </button>
             </div>
           </div>
 
-          {/* Seats Selector (Only if Confirmed) */}
+          {/* Seats Selector */}
           {status === "CONFIRMED" && (
-            <div className="p-4 rounded-2xl bg-white border border-champagne-300/60 shadow-sm space-y-2">
+            <div className="p-4 rounded-2xl bg-white border border-[#E0D4BE] shadow-sm space-y-2">
               <div className="flex items-center justify-between">
                 <div>
-                  <span className="text-xs font-semibold uppercase tracking-wider text-carbon-700 block">
-                    Lugares a Confirmar
+                  <span className="text-xs font-serif italic font-bold text-carbon-800 block">
+                    Personas que asistirán
                   </span>
-                  <span className="text-[11px] text-carbon-500">
-                    Máximo asignado a tu pase: {guest.maxSeats} {guest.maxSeats === 1 ? "persona" : "personas"}
+                  <span className="text-[11px] text-carbon-500 font-sans">
+                    Lugares reservados con cariño para ustedes: {guest.maxSeats}
                   </span>
                 </div>
                 <div className="flex items-center gap-2">
                   <button
                     type="button"
                     onClick={() => setConfirmedSeats(Math.max(1, confirmedSeats - 1))}
-                    className="w-8 h-8 rounded-full bg-alabaster-200 hover:bg-alabaster-300 text-carbon-800 flex items-center justify-center font-bold text-sm"
+                    className="w-8 h-8 rounded-full bg-[#FAF7F2] hover:bg-[#F3EFEA] border border-[#E0D4BE] text-carbon-800 flex items-center justify-center font-bold text-sm"
                   >
                     -
                   </button>
@@ -169,7 +169,7 @@ export function RsvpModal({ guest, event, onSuccess, onClose }: RsvpModalProps) 
                   <button
                     type="button"
                     onClick={() => setConfirmedSeats(Math.min(guest.maxSeats, confirmedSeats + 1))}
-                    className="w-8 h-8 rounded-full bg-champagne-500 hover:bg-champagne-600 text-carbon-950 flex items-center justify-center font-bold text-sm shadow-sm"
+                    className="w-8 h-8 rounded-full bg-[#C5A059] hover:bg-[#B88E3E] text-carbon-950 flex items-center justify-center font-bold text-sm shadow-sm"
                   >
                     +
                   </button>
@@ -178,33 +178,33 @@ export function RsvpModal({ guest, event, onSuccess, onClose }: RsvpModalProps) 
             </div>
           )}
 
-          {/* Dietary Restrictions (Optional) */}
+          {/* Dietary Restrictions */}
           {status === "CONFIRMED" && (
             <div>
-              <label className="block text-xs font-semibold uppercase tracking-wider text-carbon-600 mb-1">
-                Restricciones Alimenticias / Alergias
+              <label className="block text-xs font-serif italic text-carbon-700 mb-1">
+                ¿Alguna alergia o menú especial para el banquete?
               </label>
               <input
                 type="text"
                 value={dietaryNotes}
                 onChange={(e) => setDietaryNotes(e.target.value)}
                 placeholder="Ej. 1 vegetariano, celíaco o alergia a mariscos"
-                className="w-full px-4 py-2.5 rounded-xl border border-carbon-300 bg-white text-xs text-carbon-900 focus:outline-none focus:border-champagne-500"
+                className="w-full px-4 py-2.5 rounded-xl border border-[#DFC9A6] bg-white text-xs text-carbon-900 focus:outline-none focus:border-[#C5A059]"
               />
             </div>
           )}
 
           {/* Guest message / dedication */}
           <div>
-            <label className="block text-xs font-semibold uppercase tracking-wider text-carbon-600 mb-1">
-              Dedicatoria para Camila &amp; Andrés (Opcional)
+            <label className="block text-xs font-serif italic text-carbon-700 mb-1">
+              Unas palabras para Camila &amp; Andrés (Opcional)
             </label>
             <textarea
               rows={3}
               value={guestMessage}
               onChange={(e) => setGuestMessage(e.target.value)}
-              placeholder="Unas palabras o buenos deseos para los novios..."
-              className="w-full px-4 py-2.5 rounded-xl border border-carbon-300 bg-white text-xs text-carbon-900 focus:outline-none focus:border-champagne-500 resize-none"
+              placeholder="Escribe tus bendiciones y deseos para este nuevo camino..."
+              className="w-full px-4 py-2.5 rounded-xl border border-[#DFC9A6] bg-white text-xs text-carbon-900 focus:outline-none focus:border-[#C5A059] resize-none"
             />
           </div>
 
@@ -212,17 +212,17 @@ export function RsvpModal({ guest, event, onSuccess, onClose }: RsvpModalProps) 
           <button
             type="submit"
             disabled={isSubmitting}
-            className="w-full py-3.5 rounded-2xl bg-gradient-to-r from-champagne-600 via-champagne-500 to-champagne-600 text-carbon-950 font-bold text-sm tracking-wide shadow-gold hover:opacity-95 transition-all flex items-center justify-center gap-2"
+            className="w-full py-3.5 rounded-full bg-gradient-to-r from-[#947239] via-[#C5A059] to-[#947239] text-carbon-950 font-bold text-xs uppercase tracking-widest shadow-gold hover:opacity-95 transition-all flex items-center justify-center gap-2"
           >
             {isSubmitting ? (
               <>
                 <Loader2 className="w-4 h-4 animate-spin text-carbon-950" />
-                <span>Guardando confirmación...</span>
+                <span>Guardando con cariño...</span>
               </>
             ) : (
               <>
-                <Sparkles className="w-4 h-4" />
-                <span>{status === "CONFIRMED" ? "Confirmar y Generar Pase QR" : "Enviar Notificación"}</span>
+                <Heart className="w-4 h-4 fill-carbon-950 text-carbon-950" />
+                <span>{status === "CONFIRMED" ? "Confirmar y recibir pase de bienvenida" : "Enviar respuesta"}</span>
               </>
             )}
           </button>
