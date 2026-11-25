@@ -47,20 +47,20 @@ export function SeatingChart({ tables, guests, eventId, onRefresh }: SeatingChar
     <div className="rounded-3xl bg-white border border-[#E8DFC8] shadow-sm p-4 sm:p-6">
       <div className="flex flex-col sm:flex-row sm:items-center justify-between pb-6 border-b border-[#E8DFC8]/60 gap-4">
         <div>
-          <div className="flex items-center gap-2 text-[#7A5C30] text-xs font-serif italic mb-1">
+          <div className="flex items-center gap-2 text-[#7A5C30] text-[13px] font-sans font-semibold mb-1">
             <Heart className="w-4 h-4 fill-[#C5A059] text-[#C5A059]" />
             <span>Acomodo &amp; Hospitalidad</span>
           </div>
-          <h3 className="font-serif italic text-2xl sm:text-3xl text-carbon-900 font-bold">
+          <h3 className="font-serif text-2xl sm:text-3xl text-zinc-900 font-normal">
             Acomodo de Mesas en el Jardín
           </h3>
-          <p className="text-xs text-carbon-500 mt-0.5 font-sans">
+          <p className="text-[13px] text-zinc-600 mt-0.5 font-sans">
             Ubica con cariño a cada familia asegurando que disfruten junto a sus personas favoritas.
           </p>
         </div>
 
         {/* Unassigned count pill */}
-        <div className="px-4 py-2 rounded-2xl bg-[#F3EBDD] border border-[#DFC9A6] text-[#7A5C30] text-xs font-serif italic flex items-center gap-2">
+        <div className="px-4 py-2 rounded-2xl bg-[#F3EBDD] border border-[#DFC9A6] text-[#7A5C30] text-[13px] font-sans font-semibold flex items-center gap-2">
           <span>{unassignedGuests.length} familias confirmadas por ubicar</span>
         </div>
       </div>
@@ -90,16 +90,16 @@ export function SeatingChart({ tables, guests, eventId, onRefresh }: SeatingChar
               {/* Table Header */}
               <div className="flex items-start justify-between gap-2 mb-3">
                 <div>
-                  <span className="text-[10px] font-serif italic text-carbon-500 block">
+                  <span className="text-[11px] font-sans font-semibold text-zinc-500 uppercase tracking-wider block">
                     {table.type === "IMPERIAL" ? "Mesa Imperial" : "Mesa Redonda"}
                   </span>
-                  <h4 className="font-serif italic text-xl font-bold text-carbon-900">
+                  <h4 className="font-serif text-xl font-medium text-zinc-900">
                     {table.name}
                   </h4>
                 </div>
 
                 <div
-                  className={`px-3 py-1 rounded-full text-xs font-serif italic border ${
+                  className={`px-3 py-1 rounded-full text-[12px] font-sans font-semibold border ${
                     isOverbooked
                       ? "bg-red-100 text-red-800 border-red-300"
                       : isFull
@@ -124,7 +124,7 @@ export function SeatingChart({ tables, guests, eventId, onRefresh }: SeatingChar
               {/* Assigned Guests List */}
               <div className="space-y-2 mb-4 max-h-40 overflow-y-auto pr-1">
                 {assignedGuests.length === 0 ? (
-                  <p className="text-xs text-carbon-400 font-serif italic py-3 text-center">
+                  <p className="text-[13px] text-zinc-500 font-sans py-3 text-center">
                     Mesa libre (sin invitados asignados aún)
                   </p>
                 ) : (
@@ -134,10 +134,10 @@ export function SeatingChart({ tables, guests, eventId, onRefresh }: SeatingChar
                       className="p-2.5 rounded-xl bg-white border border-[#E8DFC8] flex items-center justify-between text-xs"
                     >
                       <div className="truncate mr-2">
-                        <span className="font-serif italic font-bold text-carbon-900 block truncate">
+                        <span className="font-sans font-semibold text-[13px] text-zinc-900 block truncate">
                           {g.familyName}
                         </span>
-                        <span className="text-[10px] text-carbon-500 font-sans">
+                        <span className="text-[12px] text-zinc-500 font-sans">
                           {g.confirmedSeats || g.maxSeats} personas
                         </span>
                       </div>
@@ -145,10 +145,10 @@ export function SeatingChart({ tables, guests, eventId, onRefresh }: SeatingChar
                       <button
                         onClick={() => handleAssign(g.guestToken, null)}
                         disabled={isAssigning}
-                        className="text-carbon-400 hover:text-red-600 p-1 rounded-lg transition-colors"
+                        className="text-zinc-400 hover:text-red-600 p-2 min-h-[44px] min-w-[44px] flex items-center justify-center rounded-lg transition-colors cursor-pointer"
                         title="Mover de esta mesa"
                       >
-                        <X className="w-3.5 h-3.5" />
+                        <X className="w-4 h-4" />
                       </button>
                     </div>
                   ))
@@ -166,7 +166,7 @@ export function SeatingChart({ tables, guests, eventId, onRefresh }: SeatingChar
                         handleAssign(e.target.value, table.tableId);
                       }
                     }}
-                    className="w-full px-3 py-2 rounded-xl border border-[#DFC9A6] bg-white text-xs text-carbon-800 font-serif italic focus:outline-none"
+                    className="w-full px-3 py-2.5 rounded-xl border border-[#DFC9A6] bg-white text-[13px] text-zinc-800 font-sans font-medium focus:outline-none min-h-[44px]"
                   >
                     <option value="" disabled>
                       + Sentar familia en esta mesa...

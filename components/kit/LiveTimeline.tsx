@@ -30,16 +30,16 @@ export function LiveTimeline({ itinerary }: LiveTimelineProps) {
     <div className="rounded-3xl bg-white border border-[#E8DFC8] shadow-luxury p-6 sm:p-8 text-carbon-900">
       <div className="flex flex-col sm:flex-row sm:items-center justify-between pb-6 border-b border-[#E8DFC8]/60 gap-2 mb-6">
         <div>
-          <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-[#F3EBDD] text-[#7A5C30] text-xs font-serif italic border border-[#DECDB3] mb-1">
+          <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-[#F3EBDD] text-[#7A5C30] text-[12px] font-sans font-semibold border border-[#DECDB3] mb-1">
             <Heart className="w-3.5 h-3.5 fill-[#C5A059] text-[#C5A059]" />
             <span>El Ritmo de la Celebración</span>
           </div>
-          <h3 className="font-serif italic text-3xl font-bold">
+          <h3 className="font-serif text-3xl font-normal text-zinc-900">
             Cronograma Minuto a Minuto
           </h3>
         </div>
 
-        <div className="text-xs text-carbon-500 font-serif italic">
+        <div className="text-[13px] text-zinc-600 font-sans">
           Toca cualquier momento para ver detalles de la fiesta
         </div>
       </div>
@@ -75,14 +75,14 @@ export function LiveTimeline({ itinerary }: LiveTimelineProps) {
 
                 <div>
                   <div className="flex items-center gap-2">
-                    <span className="font-serif italic text-2xl font-bold text-[#7A5C30]">
+                    <span className="font-sans text-xl sm:text-2xl font-bold text-[#8C6D46]">
                       {item.time}
                     </span>
-                    <h4 className="font-serif text-xl font-bold text-carbon-900">
+                    <h4 className="font-serif text-xl font-medium text-zinc-900">
                       {item.title}
                     </h4>
                   </div>
-                  <p className="text-xs text-carbon-600 font-serif italic">
+                  <p className="text-[13px] text-zinc-600 font-sans">
                     📍 {item.location} • {item.description}
                   </p>
                 </div>
@@ -91,18 +91,18 @@ export function LiveTimeline({ itinerary }: LiveTimelineProps) {
               {/* Status pill */}
               <div className="shrink-0 self-start sm:self-center">
                 {isCurrent && (
-                  <span className="px-3.5 py-1 rounded-full bg-emerald-700 text-white font-serif italic text-xs shadow-sm flex items-center gap-1.5 animate-pulse font-bold">
+                  <span className="px-3.5 py-1 rounded-full bg-emerald-700 text-white font-sans text-[12px] shadow-sm flex items-center gap-1.5 animate-pulse font-semibold">
                     <span className="w-2 h-2 rounded-full bg-white" />
                     <span>SUCEDIENDO AHORA</span>
                   </span>
                 )}
                 {isPast && (
-                  <span className="text-xs text-carbon-400 font-serif italic">
+                  <span className="text-[12px] text-zinc-500 font-sans">
                     Concluido
                   </span>
                 )}
                 {!isCurrent && !isPast && (
-                  <span className="text-xs text-[#7A5C30] font-serif italic">
+                  <span className="text-[12px] text-[#7A5C30] font-sans font-medium">
                     Siguiente momento
                   </span>
                 )}

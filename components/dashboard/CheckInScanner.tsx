@@ -69,14 +69,14 @@ export function CheckInScanner({ guests, event, onCheckInSuccess }: CheckInScann
       {/* Header */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between pb-6 border-b border-white/10 gap-4">
         <div>
-          <div className="flex items-center gap-2 text-[#DFC07D] text-xs font-serif italic mb-1">
+          <div className="flex items-center gap-2 text-[#DFC07D] text-[13px] font-sans font-semibold mb-1">
             <Heart className="w-4 h-4 fill-[#C5A059] text-[#C5A059]" />
             <span>Hospitalidad y Entrada en Calma</span>
           </div>
-          <h3 className="font-serif italic text-2xl sm:text-3xl text-white font-bold">
+          <h3 className="font-serif text-2xl sm:text-3xl text-white font-normal">
             Bienvenida en Recepción
           </h3>
-          <p className="text-xs text-zinc-400 mt-0.5 font-sans">
+          <p className="text-[13px] text-zinc-400 mt-0.5 font-sans">
             Recibe a tus invitados con una sonrisa. Cada pase es único para asegurar que cada familia reciba su lugar sin confusiones.
           </p>
         </div>
@@ -85,7 +85,7 @@ export function CheckInScanner({ guests, event, onCheckInSuccess }: CheckInScann
         <Link
           href="/modo-tv"
           target="_blank"
-          className="flex items-center gap-2 px-5 py-2.5 rounded-full bg-gradient-to-r from-[#8E6D38] via-[#C5A059] to-[#8E6D38] text-carbon-950 font-bold text-xs uppercase tracking-wider shadow-gold hover:opacity-95 transition-all shrink-0"
+          className="flex items-center gap-2 px-5 py-2.5 rounded-full bg-gradient-to-r from-[#8E6D38] via-[#C5A059] to-[#8E6D38] text-carbon-950 font-bold text-[13px] font-sans uppercase tracking-wider shadow-gold hover:opacity-95 transition-all shrink-0"
         >
           <Tv className="w-4 h-4 text-carbon-950" />
           <span>Pantalla de la Fiesta (Modo TV)</span>
@@ -97,7 +97,7 @@ export function CheckInScanner({ guests, event, onCheckInSuccess }: CheckInScann
         {/* Left Column: Input and Execution */}
         <div className="space-y-4">
           <div>
-            <label className="block text-xs font-serif italic text-[#DFC07D] mb-1">
+            <label className="block text-[13px] font-sans font-semibold text-[#DFC07D] mb-1.5">
               Escanear código QR o escribir nombre/token:
             </label>
             <div className="flex gap-2">
@@ -116,7 +116,7 @@ export function CheckInScanner({ guests, event, onCheckInSuccess }: CheckInScann
               <button
                 onClick={() => handleExecuteCheckIn()}
                 disabled={isProcessing || !inputToken.trim()}
-                className="px-6 py-3 rounded-2xl bg-[#C5A059] hover:bg-[#B88E3E] text-carbon-950 font-bold text-xs uppercase tracking-wider shadow-gold transition-all flex items-center gap-2 disabled:opacity-50"
+                className="px-6 py-3 rounded-2xl bg-[#C5A059] hover:bg-[#B88E3E] text-carbon-950 font-bold text-[13px] font-sans uppercase tracking-wider shadow-gold transition-all flex items-center gap-2 disabled:opacity-50"
               >
                 {isProcessing ? (
                   <Loader2 className="w-4 h-4 animate-spin" />
@@ -129,7 +129,7 @@ export function CheckInScanner({ guests, event, onCheckInSuccess }: CheckInScann
           </div>
 
           <div>
-            <label className="block text-[11px] font-sans text-zinc-400 mb-1">
+            <label className="block text-[12px] font-sans text-zinc-400 mb-1">
               Atendido por:
             </label>
             <input
@@ -142,7 +142,7 @@ export function CheckInScanner({ guests, event, onCheckInSuccess }: CheckInScann
 
           {/* Quick Demo Simulator Buttons */}
           <div className="pt-2">
-            <span className="text-[11px] font-serif italic text-zinc-400 block mb-2">
+            <span className="text-[12px] font-sans font-semibold text-zinc-400 block mb-2">
               Probar bienvenida con un invitado de ejemplo:
             </span>
             <div className="flex flex-wrap gap-2">
@@ -152,14 +152,14 @@ export function CheckInScanner({ guests, event, onCheckInSuccess }: CheckInScann
                   <button
                     key={g.guestToken}
                     onClick={() => handleExecuteCheckIn(g.guestToken)}
-                    className={`px-3.5 py-1.5 rounded-xl text-xs font-serif italic border flex items-center gap-1.5 transition-all ${
+                    className={`px-3.5 py-1.5 rounded-xl text-[13px] font-sans font-medium border flex items-center gap-1.5 transition-all ${
                       isAlreadyIn
                         ? "bg-purple-950/60 border-purple-500/40 text-purple-200 hover:bg-purple-900/80"
                         : "bg-white/5 border-white/10 text-zinc-300 hover:bg-white/10 hover:border-[#C5A059]/50"
                     }`}
                   >
                     <span>{g.familyName.split("&")[0]}</span>
-                    {isAlreadyIn && <span className="text-[10px] text-purple-300 font-sans">(Ya dentro)</span>}
+                    {isAlreadyIn && <span className="text-[11px] text-purple-300 font-sans">(Ya dentro)</span>}
                   </button>
                 );
               })}
@@ -178,16 +178,16 @@ export function CheckInScanner({ guests, event, onCheckInSuccess }: CheckInScann
                     <CheckCircle2 className="w-6 h-6" />
                   </div>
                   <div>
-                    <span className="text-xs uppercase tracking-widest text-emerald-400 font-sans block">
+                    <span className="text-[11px] uppercase tracking-widest text-emerald-400 font-sans font-semibold block">
                       ¡Bienvenidos a la fiesta!
                     </span>
-                    <h4 className="font-serif italic text-2xl font-bold text-white">
+                    <h4 className="font-serif text-2xl font-normal text-white">
                       {scanResult.guest?.familyName}
                     </h4>
                   </div>
                 </div>
 
-                <div className="p-3 rounded-2xl bg-black/40 border border-emerald-500/30 text-xs space-y-1.5 mb-3 font-sans">
+                <div className="p-3 rounded-2xl bg-black/40 border border-emerald-500/30 text-[13px] space-y-1.5 mb-3 font-sans">
                   <div className="flex justify-between">
                     <span className="text-zinc-400">Lugares:</span>
                     <span className="font-bold text-emerald-300">
@@ -202,7 +202,7 @@ export function CheckInScanner({ guests, event, onCheckInSuccess }: CheckInScann
                   </div>
                 </div>
 
-                <p className="text-xs text-emerald-200 font-serif italic">
+                <p className="text-[13px] text-emerald-200 font-sans">
                   Todo en orden. Por favor acompáñalos hacia su mesa.
                 </p>
               </div>
@@ -214,16 +214,16 @@ export function CheckInScanner({ guests, event, onCheckInSuccess }: CheckInScann
                     <ShieldAlert className="w-6 h-6" />
                   </div>
                   <div>
-                    <span className="text-xs uppercase tracking-widest text-red-400 font-bold font-sans block">
+                    <span className="text-[11px] uppercase tracking-widest text-red-400 font-bold font-sans block">
                       Aviso: Este pase ya fue recibido
                     </span>
-                    <h4 className="font-serif italic text-2xl font-bold text-white">
+                    <h4 className="font-serif text-2xl font-normal text-white">
                       {scanResult.guest?.familyName || "Titular"}
                     </h4>
                   </div>
                 </div>
 
-                <div className="p-3 rounded-2xl bg-black/50 border border-red-500/40 text-xs space-y-1.5 mb-3 font-sans">
+                <div className="p-3 rounded-2xl bg-black/50 border border-red-500/40 text-[13px] space-y-1.5 mb-3 font-sans">
                   <div className="flex justify-between text-red-300 font-bold">
                     <span>Estado:</span>
                     <span>YA INGRESÓ PREVIAMENTE</span>
@@ -242,7 +242,7 @@ export function CheckInScanner({ guests, event, onCheckInSuccess }: CheckInScann
                   </div>
                 </div>
 
-                <p className="text-xs text-red-200 font-serif italic leading-relaxed">
+                <p className="text-[13px] text-red-200 font-sans leading-relaxed">
                   Para proteger los lugares de la familia, el pase solo puede usarse una vez. Por favor consulta con la pareja o wedding planner.
                 </p>
               </div>
@@ -250,17 +250,17 @@ export function CheckInScanner({ guests, event, onCheckInSuccess }: CheckInScann
               // Generic Error
               <div className="p-6 rounded-3xl bg-carbon-800 border border-carbon-700 text-zinc-300 text-center">
                 <XCircle className="w-8 h-8 text-amber-500 mx-auto mb-2" />
-                <p className="text-sm font-serif italic text-white">{scanResult.message}</p>
+                <p className="text-sm font-sans text-white">{scanResult.message}</p>
               </div>
             )
           ) : (
             // Idle State
             <div className="p-8 rounded-3xl bg-white/5 border border-dashed border-white/10 text-center text-zinc-400 flex flex-col items-center justify-center">
               <DoorOpen className="w-12 h-12 text-[#DFC07D]/50 mb-3" />
-              <p className="font-serif italic text-base text-white">
+              <p className="font-serif text-lg text-white font-normal">
                 Recepción en Espera
               </p>
-              <p className="text-xs text-zinc-400 mt-1 max-w-xs font-sans">
+              <p className="text-[13px] text-zinc-400 mt-1 max-w-xs font-sans">
                 Escanea el código QR del pase de bienvenida de tu invitado o elige uno de prueba a la izquierda.
               </p>
             </div>

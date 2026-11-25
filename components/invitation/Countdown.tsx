@@ -40,7 +40,7 @@ export function Countdown({ targetDate }: CountdownProps) {
   if (timeLeft.isPast) {
     return (
       <div className="text-center py-4 px-6 rounded-2xl bg-champagne-100/60 border border-champagne-300 text-carbon-800">
-        <p className="font-serif italic text-2xl">¡El gran día ha llegado!</p>
+        <p className="font-serif text-2xl text-zinc-900">¡El gran día ha llegado!</p>
       </div>
     );
   }
@@ -60,10 +60,10 @@ export function Countdown({ targetDate }: CountdownProps) {
             key={index}
             className="flex flex-col items-center justify-center p-3 sm:p-5 rounded-2xl bg-white/70 backdrop-blur-md border border-champagne-400/30 shadow-luxury"
           >
-            <span className="font-serif italic text-3xl sm:text-5xl font-semibold text-carbon-900 leading-none">
+            <span className="font-sans text-3xl sm:text-5xl font-bold text-zinc-900 leading-none">
               {String(unit.value).padStart(2, "0")}
             </span>
-            <span className="text-[10px] sm:text-xs uppercase tracking-widest text-carbon-500 font-sans mt-2 font-medium">
+            <span className="text-[11px] sm:text-xs uppercase tracking-widest text-zinc-600 font-sans mt-2 font-semibold">
               {unit.label}
             </span>
           </div>

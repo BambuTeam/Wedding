@@ -1,6 +1,8 @@
 import { NextRequest, NextResponse } from "next/server";
 import { EventsRepository } from "@/lib/db/repository";
 
+export const dynamic = "force-dynamic";
+
 export async function GET(
   request: NextRequest,
   { params }: { params: { eventId: string } }
@@ -10,8 +12,10 @@ export async function GET(
     const guests = await EventsRepository.getAllGuests(params.eventId);
 
     // Calcular ocupación de cada mesa
-    const tablesWithOccupancy = tables.map((t) => {
-      const assignedGuests = guests.filter((g) => g.tableId === t.tableId);
+    const safeTables = Array.isArray(tables) ? tables : [];
+    const safeGuests = Array.isArray(guests) ? guests : [];
+    const tablesWithOccupancy = safeTables.map((t) => {
+      const assignedGuests = safeGuests.filter((g) => g.tableId === t.tableId);
       const occupiedSeats = assignedGuests.reduce((acc, g) => acc + (g.confirmedSeats || g.maxSeats), 0);
       return {
         ...t,

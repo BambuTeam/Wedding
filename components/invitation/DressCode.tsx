@@ -11,22 +11,22 @@ interface DressCodeProps {
 export function DressCode({ event }: DressCodeProps) {
   return (
     <div className="w-full max-w-3xl mx-auto p-6 sm:p-8 rounded-3xl bg-white/80 backdrop-blur-md border border-champagne-400/30 shadow-luxury text-center">
-      <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-champagne-100 text-champagne-800 text-xs font-semibold uppercase tracking-widest mb-3">
+      <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-champagne-100 text-champagne-800 text-[12px] font-sans font-semibold uppercase tracking-widest mb-3">
         <Sparkles className="w-3.5 h-3.5 text-champagne-600" />
         <span>Código de Vestimenta</span>
       </div>
 
-      <h3 className="font-serif italic text-3xl sm:text-4xl text-carbon-900 mb-3">
+      <h3 className="font-serif text-3xl sm:text-4xl text-zinc-900 mb-3 font-normal">
         {event.dressCodeTitle}
       </h3>
 
-      <p className="text-sm sm:text-base text-carbon-600 max-w-xl mx-auto leading-relaxed mb-6 font-sans">
+      <p className="text-[13px] sm:text-base text-zinc-700 max-w-xl mx-auto leading-relaxed mb-6 font-sans">
         {event.dressCodeDescription}
       </p>
 
       {/* Palette Color Circles */}
       <div className="pt-2">
-        <span className="text-[11px] uppercase tracking-widest text-carbon-400 font-semibold block mb-3">
+        <span className="text-[12px] font-sans uppercase tracking-widest text-zinc-500 font-semibold block mb-3">
           Paleta de Inspiración
         </span>
         <div className="flex items-center justify-center gap-3">
@@ -37,7 +37,7 @@ export function DressCode({ event }: DressCodeProps) {
                 style={{ backgroundColor: color }}
                 title={`Color ${color}`}
               />
-              <span className="text-[10px] font-mono text-carbon-400 uppercase">
+              <span className="text-[11px] font-mono text-zinc-500 uppercase">
                 {color}
               </span>
             </div>

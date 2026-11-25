@@ -1,6 +1,7 @@
 "use client";
 
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
+import { createPortal } from "react-dom";
 import confetti from "canvas-confetti";
 import {
   Check,
@@ -29,6 +30,11 @@ export function RsvpModal({ guest, event, onSuccess, onClose }: RsvpModalProps) 
   const [guestMessage, setGuestMessage] = useState<string>(guest.guestMessage || "");
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
+  const [mounted, setMounted] = useState(false);
+
+  useEffect(() => {
+    setMounted(true);
+  }, []);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -77,8 +83,17 @@ export function RsvpModal({ guest, event, onSuccess, onClose }: RsvpModalProps) 
     }
   };
 
-  return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-[#141210]/80 backdrop-blur-md">
+  if (!mounted) return null;
+
+  return createPortal(
+    <div
+      role="dialog"
+      aria-modal="true"
+      className="fixed inset-0 z-[100] w-screen h-dvh m-0 p-4 sm:p-6 flex items-center justify-center bg-[#141311]/75 backdrop-blur-md overflow-y-auto"
+      onClick={(e) => {
+        if (e.target === e.currentTarget) onClose();
+      }}
+    >
       <div className="relative w-full max-w-lg rounded-3xl bg-[#FAF7F2] border border-[#DFC9A6] shadow-2xl p-6 sm:p-8 text-carbon-900 max-h-[90vh] overflow-y-auto">
         {/* Close Button */}
         <button
@@ -90,13 +105,13 @@ export function RsvpModal({ guest, event, onSuccess, onClose }: RsvpModalProps) 
 
         {/* Header */}
         <div className="text-center pb-4 border-b border-[#E8DFC8]">
-          <span className="text-xs font-serif italic text-[#7A5C30] tracking-widest uppercase">
+          <span className="text-[12px] font-sans font-semibold text-[#7A5C30] tracking-widest uppercase">
             Confirmación con el corazón
           </span>
-          <h3 className="font-serif italic text-3xl text-carbon-900 font-bold mt-0.5">
+          <h3 className="font-serif text-3xl text-zinc-900 font-normal mt-0.5">
             {guest.familyName}
           </h3>
-          <p className="text-xs text-carbon-500 font-serif italic mt-1">
+          <p className="text-[13px] text-zinc-600 font-sans mt-1">
             Por favor confírmanos antes del 15 de Noviembre para preparar cada detalle
           </p>
         </div>
@@ -111,14 +126,14 @@ export function RsvpModal({ guest, event, onSuccess, onClose }: RsvpModalProps) 
 
           {/* Decision Pill Selector */}
           <div>
-            <label className="block text-xs font-serif italic text-carbon-700 mb-2 text-center text-sm">
+            <label className="block text-[13px] font-sans font-semibold text-zinc-800 mb-2 text-center">
               ¿Nos acompañarás en nuestro gran día?
             </label>
             <div className="grid grid-cols-2 gap-3">
               <button
                 type="button"
                 onClick={() => setStatus("CONFIRMED")}
-                className={`p-3.5 rounded-2xl border text-xs font-serif italic transition-all flex items-center justify-center gap-2 ${
+                className={`p-3.5 rounded-2xl border text-[13px] font-sans font-semibold transition-all flex items-center justify-center gap-2 ${
                   status === "CONFIRMED"
                     ? "bg-[#C5A059] text-carbon-950 border-[#B88E3E] font-bold shadow-gold"
                     : "bg-white text-carbon-700 border-carbon-200 hover:bg-carbon-50"
@@ -131,7 +146,7 @@ export function RsvpModal({ guest, event, onSuccess, onClose }: RsvpModalProps) 
               <button
                 type="button"
                 onClick={() => setStatus("DECLINED")}
-                className={`p-3.5 rounded-2xl border text-xs font-serif italic transition-all flex items-center justify-center gap-2 ${
+                className={`p-3.5 rounded-2xl border text-[13px] font-sans font-semibold transition-all flex items-center justify-center gap-2 ${
                   status === "DECLINED"
                     ? "bg-[#24211D] text-white border-carbon-900 shadow-md font-bold"
                     : "bg-white text-carbon-700 border-carbon-200 hover:bg-carbon-50"
@@ -148,10 +163,10 @@ export function RsvpModal({ guest, event, onSuccess, onClose }: RsvpModalProps) 
             <div className="p-4 rounded-2xl bg-white border border-[#E0D4BE] shadow-sm space-y-2">
               <div className="flex items-center justify-between">
                 <div>
-                  <span className="text-xs font-serif italic font-bold text-carbon-800 block">
+                  <span className="text-[13px] font-sans font-semibold text-zinc-800 block">
                     Personas que asistirán
                   </span>
-                  <span className="text-[11px] text-carbon-500 font-sans">
+                  <span className="text-[12px] text-zinc-600 font-sans">
                     Lugares reservados con cariño para ustedes: {guest.maxSeats}
                   </span>
                 </div>
@@ -163,7 +178,7 @@ export function RsvpModal({ guest, event, onSuccess, onClose }: RsvpModalProps) 
                   >
                     -
                   </button>
-                  <span className="font-serif italic text-2xl font-bold w-6 text-center text-carbon-900">
+                  <span className="font-sans text-2xl font-bold w-6 text-center text-zinc-900">
                     {confirmedSeats}
                   </span>
                   <button
@@ -181,7 +196,7 @@ export function RsvpModal({ guest, event, onSuccess, onClose }: RsvpModalProps) 
           {/* Dietary Restrictions */}
           {status === "CONFIRMED" && (
             <div>
-              <label className="block text-xs font-serif italic text-carbon-700 mb-1">
+              <label className="block text-[13px] font-sans font-semibold text-zinc-800 mb-1">
                 ¿Alguna alergia o menú especial para el banquete?
               </label>
               <input
@@ -189,14 +204,14 @@ export function RsvpModal({ guest, event, onSuccess, onClose }: RsvpModalProps) 
                 value={dietaryNotes}
                 onChange={(e) => setDietaryNotes(e.target.value)}
                 placeholder="Ej. 1 vegetariano, celíaco o alergia a mariscos"
-                className="w-full px-4 py-2.5 rounded-xl border border-[#DFC9A6] bg-white text-xs text-carbon-900 focus:outline-none focus:border-[#C5A059]"
+                className="w-full px-4 py-2.5 rounded-xl border border-[#DFC9A6] bg-white text-[13px] text-zinc-900 focus:outline-none focus:border-[#C5A059] font-sans"
               />
             </div>
           )}
 
           {/* Guest message / dedication */}
           <div>
-            <label className="block text-xs font-serif italic text-carbon-700 mb-1">
+            <label className="block text-[13px] font-sans font-semibold text-zinc-800 mb-1">
               Unas palabras para Camila &amp; Andrés (Opcional)
             </label>
             <textarea
@@ -204,7 +219,7 @@ export function RsvpModal({ guest, event, onSuccess, onClose }: RsvpModalProps) 
               value={guestMessage}
               onChange={(e) => setGuestMessage(e.target.value)}
               placeholder="Escribe tus bendiciones y deseos para este nuevo camino..."
-              className="w-full px-4 py-2.5 rounded-xl border border-[#DFC9A6] bg-white text-xs text-carbon-900 focus:outline-none focus:border-[#C5A059] resize-none"
+              className="w-full px-4 py-2.5 rounded-xl border border-[#DFC9A6] bg-white text-[13px] text-zinc-900 focus:outline-none focus:border-[#C5A059] resize-none font-sans"
             />
           </div>
 
@@ -212,7 +227,7 @@ export function RsvpModal({ guest, event, onSuccess, onClose }: RsvpModalProps) 
           <button
             type="submit"
             disabled={isSubmitting}
-            className="w-full py-3.5 rounded-full bg-gradient-to-r from-[#947239] via-[#C5A059] to-[#947239] text-carbon-950 font-bold text-xs uppercase tracking-widest shadow-gold hover:opacity-95 transition-all flex items-center justify-center gap-2"
+            className="w-full py-3.5 rounded-full bg-gradient-to-r from-[#947239] via-[#C5A059] to-[#947239] text-carbon-950 font-bold text-[13px] font-sans uppercase tracking-wider shadow-gold hover:opacity-95 transition-all flex items-center justify-center gap-2"
           >
             {isSubmitting ? (
               <>
@@ -228,6 +243,7 @@ export function RsvpModal({ guest, event, onSuccess, onClose }: RsvpModalProps) 
           </button>
         </form>
       </div>
-    </div>
+    </div>,
+    document.body
   );
 }

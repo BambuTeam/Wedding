@@ -25,27 +25,27 @@ export function WifiCard({ event }: WifiCardProps) {
       <div className="flex flex-col md:flex-row items-center justify-between gap-6">
         {/* Info */}
         <div className="space-y-3 text-center md:text-left">
-          <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-[#C5A059]/20 text-[#DFC07D] text-xs font-serif italic border border-[#C5A059]/30">
+          <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-[#C5A059]/20 text-[#DFC07D] text-[12px] font-sans font-semibold border border-[#C5A059]/30">
             <Wifi className="w-3.5 h-3.5" />
             <span>Wi-Fi del Convento</span>
           </div>
 
-          <h3 className="font-serif italic text-3xl sm:text-4xl text-white font-bold">
+          <h3 className="font-serif text-3xl sm:text-4xl text-white font-normal">
             Conéctate y Comparte Cada Momento
           </h3>
 
           <div className="space-y-2 pt-2">
             <div>
-              <span className="text-[10px] text-zinc-400 uppercase tracking-widest font-sans block">
+              <span className="text-[11px] text-zinc-400 uppercase tracking-widest font-sans font-semibold block">
                 Red:
               </span>
-              <span className="font-serif italic text-lg text-[#DFC07D] font-bold">
+              <span className="font-sans text-base sm:text-lg text-[#DFC07D] font-semibold">
                 {event.wifiSsid}
               </span>
             </div>
 
             <div>
-              <span className="text-[10px] text-zinc-400 uppercase tracking-widest font-sans block">
+              <span className="text-[11px] text-zinc-400 uppercase tracking-widest font-sans font-semibold block">
                 Contraseña:
               </span>
               <div className="flex items-center gap-2 mt-0.5 justify-center md:justify-start">
@@ -55,7 +55,7 @@ export function WifiCard({ event }: WifiCardProps) {
 
                 <button
                   onClick={handleCopyPassword}
-                  className="px-4 py-2 rounded-xl bg-[#C5A059] hover:bg-[#B88E3E] text-carbon-950 font-bold text-xs uppercase tracking-wider shadow-gold transition-all flex items-center gap-1.5 font-sans"
+                  className="px-4 py-2 rounded-xl bg-[#C5A059] hover:bg-[#B88E3E] text-carbon-950 font-bold text-[13px] uppercase tracking-wider shadow-gold transition-all flex items-center gap-1.5 font-sans"
                 >
                   {copied ? (
                     <>
@@ -77,7 +77,7 @@ export function WifiCard({ event }: WifiCardProps) {
         {/* QR for instant camera Wi-Fi pairing */}
         <div className="shrink-0 flex flex-col items-center p-4 rounded-2xl bg-[#FCFAF7] text-carbon-900 border-2 border-[#C5A059]/40 shadow-inner">
           <QRCodeSVG value={wifiQrPayload} size={130} level="M" />
-          <span className="text-[10px] font-serif italic text-carbon-600 mt-2">
+          <span className="text-[12px] font-sans text-zinc-600 mt-2">
             Apunta tu cámara para conectar
           </span>
         </div>

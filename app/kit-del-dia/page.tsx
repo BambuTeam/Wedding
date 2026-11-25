@@ -17,6 +17,7 @@ import { LiveTimeline } from "@/components/kit/LiveTimeline";
 import { BanquetMenu } from "@/components/kit/BanquetMenu";
 import { WifiCard } from "@/components/kit/WifiCard";
 import { LiveAlbum } from "@/components/kit/LiveAlbum";
+import { MOCK_EVENTS, MOCK_GUESTS, MOCK_TABLES } from "@/lib/db/mock-data";
 
 export default function KitDelDiaPage() {
   const eventId = "camila-andres-2025";
@@ -27,6 +28,11 @@ export default function KitDelDiaPage() {
 
   useEffect(() => {
     async function loadKitData() {
+      setLoading(true);
+      let foundEvent: EventMeta | null = null;
+      let foundGuests: Guest[] = [];
+      let foundTables: Table[] = [];
+
       try {
         const [eventRes, guestsRes, tablesRes] = await Promise.all([
           fetch(`/api/events/${eventId}`),
@@ -34,18 +40,49 @@ export default function KitDelDiaPage() {
           fetch(`/api/events/${eventId}/tables`),
         ]);
 
-        const eventData = await eventRes.json();
-        const guestsData = await guestsRes.json();
-        const tablesData = await tablesRes.json();
+        if (eventRes.ok) {
+          const contentType = eventRes.headers.get("content-type");
+          if (contentType && contentType.includes("application/json")) {
+            const eventData = await eventRes.json();
+            if (eventData?.event) foundEvent = eventData.event;
+          }
+        }
 
-        if (eventData.event) setEvent(eventData.event);
-        if (guestsData.guests) setGuests(guestsData.guests);
-        if (tablesData.tables) setTables(tablesData.tables);
+        if (guestsRes.ok) {
+          const contentType = guestsRes.headers.get("content-type");
+          if (contentType && contentType.includes("application/json")) {
+            const guestsData = await guestsRes.json();
+            if (guestsData?.guests) foundGuests = guestsData.guests;
+          }
+        }
+
+        if (tablesRes.ok) {
+          const contentType = tablesRes.headers.get("content-type");
+          if (contentType && contentType.includes("application/json")) {
+            const tablesData = await tablesRes.json();
+            if (tablesData?.tables) foundTables = tablesData.tables;
+          }
+        }
       } catch (err) {
-        console.error("Error loading kit data:", err);
-      } finally {
-        setLoading(false);
+        console.warn("API fetch fallback triggered for kit:", err);
       }
+
+      if (!foundEvent) {
+        foundEvent = MOCK_EVENTS[eventId] || MOCK_EVENTS["camila-andres-2025"];
+      }
+
+      if (foundGuests.length === 0) {
+        foundGuests = MOCK_GUESTS[eventId] || MOCK_GUESTS["camila-andres-2025"] || [];
+      }
+
+      if (foundTables.length === 0) {
+        foundTables = MOCK_TABLES[eventId] || MOCK_TABLES["camila-andres-2025"] || [];
+      }
+
+      setEvent(foundEvent);
+      setGuests(foundGuests);
+      setTables(foundTables);
+      setLoading(false);
     }
 
     loadKitData();
@@ -55,7 +92,7 @@ export default function KitDelDiaPage() {
     return (
       <div className="min-h-[70vh] flex flex-col items-center justify-center gap-3">
         <Loader2 className="w-8 h-8 animate-spin text-[#C5A059]" />
-        <p className="font-serif italic text-xl text-carbon-700">
+        <p className="font-sans text-lg text-zinc-700 font-medium">
           Abriendo el kit de la celebración...
         </p>
       </div>
@@ -66,16 +103,16 @@ export default function KitDelDiaPage() {
     <div className="max-w-5xl mx-auto px-4 sm:px-6 pt-6 pb-28 space-y-12">
       {/* Header Banner */}
       <section className="text-center space-y-3">
-        <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-[#F3EBDD] border border-[#DFC9A6] text-[#7A5C30] text-xs font-serif italic tracking-wide">
+        <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-[#F3EBDD] border border-[#DFC9A6] text-[#7A5C30] text-[13px] font-sans font-semibold tracking-wide">
           <Heart className="w-3.5 h-3.5 fill-[#C5A059] text-[#C5A059]" />
           <span>Tu Guía para Disfrutar la Fiesta</span>
         </div>
 
-        <h1 className="font-serif italic text-4xl sm:text-6xl text-carbon-900 font-bold">
+        <h1 className="font-serif italic text-4xl sm:text-6xl text-zinc-900 font-normal">
           El Día de la Boda • {event.title}
         </h1>
 
-        <p className="text-xs sm:text-base text-carbon-600 max-w-xl mx-auto font-serif italic">
+        <p className="text-[13px] sm:text-base text-zinc-700 max-w-xl mx-auto font-sans">
           Todo lo que necesitas saber hoy en {event.venueName}, {event.venueCity}.
         </p>
       </section>

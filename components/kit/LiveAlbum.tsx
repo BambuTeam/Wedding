@@ -103,14 +103,14 @@ export function LiveAlbum({ event }: LiveAlbumProps) {
       {/* Header */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between pb-6 border-b border-[#E8DFC8]/60 gap-4 mb-8">
         <div>
-          <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-[#F3EBDD] text-[#7A5C30] text-xs font-serif italic border border-[#DECDB3] mb-1">
+          <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-[#F3EBDD] text-[#7A5C30] text-[12px] font-sans font-semibold border border-[#DECDB3] mb-1">
             <Camera className="w-3.5 h-3.5 text-[#C5A059]" />
             <span>Recuerdos Compartidos</span>
           </div>
-          <h3 className="font-serif italic text-3xl sm:text-4xl font-bold">
+          <h3 className="font-serif text-3xl sm:text-4xl text-zinc-900 font-normal">
             Los Recuerdos a Través de Tus Ojos
           </h3>
-          <p className="text-xs text-carbon-500 mt-0.5 font-serif italic">
+          <p className="text-[13px] text-zinc-600 mt-0.5 font-sans">
             Tus fotos con los novios aparecen en la pantalla de la fiesta y se guardan en su álbum para siempre.
           </p>
         </div>
@@ -119,7 +119,7 @@ export function LiveAlbum({ event }: LiveAlbumProps) {
           href="/modo-tv"
           target="_blank"
           rel="noopener noreferrer"
-          className="flex items-center gap-2 px-5 py-2.5 rounded-full bg-[#1E1C1A] hover:bg-carbon-800 text-[#DFC07D] text-xs font-serif italic shrink-0 shadow-sm"
+          className="flex items-center gap-2 px-5 py-2.5 rounded-full bg-[#1E1C1A] hover:bg-carbon-800 text-[#DFC07D] text-[13px] font-sans font-semibold shrink-0 shadow-sm"
         >
           <Tv className="w-4 h-4" />
           <span>Ver Pantalla de la Fiesta</span>
@@ -144,10 +144,10 @@ export function LiveAlbum({ event }: LiveAlbumProps) {
               ) : (
                 <div className="text-center p-3">
                   <Camera className="w-7 h-7 text-[#C5A059] mx-auto mb-1" />
-                  <span className="text-xs font-serif italic font-bold text-carbon-800 block">
+                  <span className="text-[13px] font-sans font-semibold text-zinc-800 block">
                     Tomar o Elegir Foto
                   </span>
-                  <span className="text-[10px] text-carbon-400 font-sans">
+                  <span className="text-[11px] text-zinc-500 font-sans">
                     Cámara o galería
                   </span>
                 </div>
@@ -170,7 +170,7 @@ export function LiveAlbum({ event }: LiveAlbumProps) {
                 placeholder="Tu nombre (ej. Lucía Álvarez)"
                 value={authorName}
                 onChange={(e) => setAuthorName(e.target.value)}
-                className="w-full px-3 py-2 rounded-xl border border-[#DFC9A6] text-xs text-carbon-900 bg-white focus:outline-none focus:border-[#C5A059]"
+                className="w-full px-3 py-2 rounded-xl border border-[#DFC9A6] text-[13px] text-zinc-900 bg-white focus:outline-none focus:border-[#C5A059] font-sans"
               />
 
               <input
@@ -178,13 +178,13 @@ export function LiveAlbum({ event }: LiveAlbumProps) {
                 placeholder="Un mensaje o dedicatoria para la foto..."
                 value={message}
                 onChange={(e) => setMessage(e.target.value)}
-                className="w-full px-3 py-2 rounded-xl border border-[#DFC9A6] text-xs text-carbon-900 bg-white focus:outline-none focus:border-[#C5A059]"
+                className="w-full px-3 py-2 rounded-xl border border-[#DFC9A6] text-[13px] text-zinc-900 bg-white focus:outline-none focus:border-[#C5A059] font-sans"
               />
 
               <button
                 type="submit"
                 disabled={isUploading || (!selectedFile && !previewUrl)}
-                className="w-full py-2.5 rounded-xl bg-[#C5A059] hover:bg-[#B88E3E] text-carbon-950 font-bold text-xs uppercase tracking-wider font-sans shadow-gold transition-all flex items-center justify-center gap-2 disabled:opacity-50 cursor-pointer"
+                className="w-full py-2.5 rounded-xl bg-[#C5A059] hover:bg-[#B88E3E] text-carbon-950 font-bold text-[13px] uppercase tracking-wider font-sans shadow-gold transition-all flex items-center justify-center gap-2 disabled:opacity-50 cursor-pointer"
               >
                 {isUploading ? (
                   <>
@@ -219,17 +219,17 @@ export function LiveAlbum({ event }: LiveAlbumProps) {
             </div>
 
             <div className="p-3.5 space-y-1">
-              <div className="flex items-center justify-between text-xs">
-                <span className="font-serif italic font-bold text-carbon-900 truncate">
+              <div className="flex items-center justify-between text-[13px]">
+                <span className="font-sans font-semibold text-zinc-900 truncate">
                   {p.author}
                 </span>
-                <span className="text-[10px] text-carbon-400 font-sans">
+                <span className="text-[11px] text-zinc-500 font-sans">
                   {new Date(p.timestamp).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })}
                 </span>
               </div>
 
               {p.message && (
-                <p className="text-xs text-carbon-600 font-serif italic leading-snug">
+                <p className="text-[13px] text-zinc-600 font-sans leading-snug">
                   &ldquo;{p.message}&rdquo;
                 </p>
               )}

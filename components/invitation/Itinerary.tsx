@@ -50,14 +50,14 @@ export function Itinerary({ event }: ItineraryProps) {
       <div className="p-6 sm:p-8 rounded-3xl bg-white/80 backdrop-blur-md border border-champagne-400/30 shadow-luxury">
         <div className="flex flex-col md:flex-row items-start md:items-center justify-between gap-6 pb-6 border-b border-champagne-300/30">
           <div>
-            <div className="flex items-center gap-2 text-champagne-700 text-xs font-semibold uppercase tracking-widest mb-1">
+            <div className="flex items-center gap-2 text-[#7A5C30] text-[12px] font-sans font-semibold uppercase tracking-widest mb-1">
               <MapPin className="w-4 h-4" />
               <span>Lugar de la Celebración</span>
             </div>
-            <h3 className="font-serif italic text-2xl sm:text-3xl text-carbon-900">
+            <h3 className="font-serif text-2xl sm:text-3xl text-zinc-900 font-normal">
               {event.venueName}
             </h3>
-            <p className="text-sm text-carbon-600 mt-1 max-w-md">
+            <p className="text-[13px] sm:text-sm text-zinc-600 mt-1 max-w-md font-sans">
               {event.venueAddress}
             </p>
           </div>
@@ -68,7 +68,7 @@ export function Itinerary({ event }: ItineraryProps) {
               href={event.wazeUrl}
               target="_blank"
               rel="noopener noreferrer"
-              className="flex items-center gap-1.5 px-3.5 py-2 rounded-xl bg-blue-500 hover:bg-blue-600 text-white text-xs font-semibold shadow-sm transition-all"
+              className="flex items-center gap-1.5 px-3.5 py-2 rounded-xl bg-blue-500 hover:bg-blue-600 text-white text-[13px] font-sans font-semibold shadow-sm transition-all"
             >
               <Navigation className="w-3.5 h-3.5" />
               <span>Abrir en Waze</span>
@@ -78,7 +78,7 @@ export function Itinerary({ event }: ItineraryProps) {
               href={event.googleMapsUrl}
               target="_blank"
               rel="noopener noreferrer"
-              className="flex items-center gap-1.5 px-3.5 py-2 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-semibold shadow-sm transition-all"
+              className="flex items-center gap-1.5 px-3.5 py-2 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white text-[13px] font-sans font-semibold shadow-sm transition-all"
             >
               <Compass className="w-3.5 h-3.5" />
               <span>Google Maps</span>
@@ -86,7 +86,7 @@ export function Itinerary({ event }: ItineraryProps) {
 
             <button
               onClick={handleDownloadIcs}
-              className="flex items-center gap-1.5 px-3.5 py-2 rounded-xl bg-carbon-800 hover:bg-carbon-900 text-champagne-200 text-xs font-semibold shadow-sm transition-all"
+              className="flex items-center gap-1.5 px-3.5 py-2 rounded-xl bg-carbon-800 hover:bg-carbon-900 text-champagne-200 text-[13px] font-sans font-semibold shadow-sm transition-all"
             >
               <Calendar className="w-3.5 h-3.5 text-champagne-400" />
               <span>Guardar en Calendario (.ics)</span>
@@ -96,7 +96,7 @@ export function Itinerary({ event }: ItineraryProps) {
 
         {/* Timeline List */}
         <div className="pt-8">
-          <h4 className="text-xs uppercase tracking-[0.25em] text-carbon-500 mb-6 font-semibold">
+          <h4 className="text-[11px] uppercase tracking-[0.2em] text-zinc-500 mb-6 font-sans font-semibold">
             Cronograma del Día
           </h4>
           <div className="relative pl-6 sm:pl-8 border-l-2 border-champagne-300/60 space-y-8">
@@ -110,18 +110,18 @@ export function Itinerary({ event }: ItineraryProps) {
                   </div>
 
                   <div className="flex flex-col sm:flex-row sm:items-baseline gap-1 sm:gap-3">
-                    <span className="font-serif italic text-2xl font-bold text-champagne-700 tracking-wider">
+                    <span className="font-sans text-xl sm:text-2xl font-bold text-[#8C6D46] tracking-normal">
                       {item.time}
                     </span>
-                    <span className="font-serif text-xl sm:text-2xl text-carbon-900 font-semibold">
+                    <span className="font-serif text-xl sm:text-2xl text-zinc-900 font-normal">
                       {item.title}
                     </span>
                   </div>
 
-                  <p className="text-xs sm:text-sm font-medium text-carbon-500 mt-0.5">
+                  <p className="text-[12px] sm:text-[13px] font-sans font-medium text-zinc-500 mt-0.5">
                     📍 {item.location}
                   </p>
-                  <p className="text-xs sm:text-sm text-carbon-600 mt-1 leading-relaxed">
+                  <p className="text-[13px] sm:text-sm text-zinc-700 font-sans mt-1 leading-relaxed">
                     {item.description}
                   </p>
                 </div>

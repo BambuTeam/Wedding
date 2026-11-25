@@ -24,23 +24,23 @@ export function EventSelector({ currentEvent, allEvents, onSelectEvent }: EventS
         </div>
 
         <div>
-          <span className="text-[10px] uppercase tracking-wider text-carbon-400 block font-sans">
+          <span className="text-[11px] uppercase tracking-wider text-zinc-500 block font-sans font-medium">
             Celebración Activa
           </span>
-          <span className="font-serif italic text-lg text-carbon-900 font-bold block leading-tight">
+          <span className="font-sans text-sm font-semibold text-zinc-900 block leading-tight mt-0.5">
             {currentEvent.title}
           </span>
-          <span className="text-[11px] text-carbon-500 font-serif italic">
+          <span className="text-[12px] text-zinc-600 font-sans block mt-0.5">
             {currentEvent.venueCity}
           </span>
         </div>
 
-        <ChevronDown className="w-4 h-4 text-carbon-400 ml-2" />
+        <ChevronDown className="w-4 h-4 text-zinc-400 ml-2" />
       </button>
 
       {isOpen && (
         <div className="absolute left-0 mt-2 w-80 rounded-2xl bg-white border border-[#DFC9A6] shadow-2xl p-2 z-50">
-          <div className="px-3 py-2 text-[11px] uppercase tracking-wider text-carbon-400 border-b border-carbon-100 font-sans">
+          <div className="px-3 py-2 text-[11px] uppercase tracking-wider text-zinc-500 border-b border-zinc-100 font-sans font-semibold">
             Cambiar de Celebración
           </div>
 
@@ -56,15 +56,15 @@ export function EventSelector({ currentEvent, allEvents, onSelectEvent }: EventS
                   }}
                   className={`w-full text-left p-2.5 rounded-xl transition-all flex items-center justify-between ${
                     isSelected
-                      ? "bg-[#FAF7F2] border border-[#DFC9A6] text-carbon-950 font-medium"
-                      : "hover:bg-[#FAF7F2]/60 text-carbon-700"
+                      ? "bg-[#FAF7F2] border border-[#DFC9A6] text-zinc-950 font-medium"
+                      : "hover:bg-[#FAF7F2]/60 text-zinc-700"
                   }`}
                 >
                   <div>
-                    <p className="font-serif italic text-base font-bold text-carbon-900">
+                    <p className="font-sans text-sm font-semibold text-zinc-900">
                       {evt.title}
                     </p>
-                    <p className="text-[11px] text-carbon-500 font-sans">
+                    <p className="text-[12px] text-zinc-600 font-sans mt-0.5">
                       {evt.venueName} • {evt.eventDateFormatted.split(",")[1] || evt.eventDateFormatted}
                     </p>
                   </div>

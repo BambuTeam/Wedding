@@ -62,15 +62,15 @@ export function PassQR({ guest, event, tableName }: PassQRProps) {
         {/* Header */}
         <div className="flex items-center justify-between pb-5 border-b border-white/10">
           <div>
-            <div className="flex items-center gap-1.5 text-[#DFC07D] text-xs font-serif italic tracking-wider">
+            <div className="flex items-center gap-1.5 text-[#DFC07D] text-[13px] font-sans font-semibold tracking-wide">
               <Heart className="w-3.5 h-3.5 fill-[#DFC07D]" />
               <span>Pase de Bienvenida</span>
             </div>
-            <h3 className="font-serif italic text-2xl text-white mt-0.5">
+            <h3 className="font-serif text-2xl text-white mt-0.5 font-normal">
               {event.title}
             </h3>
           </div>
-          <div className="px-3 py-1 rounded-full bg-[#C5A059]/20 border border-[#C5A059]/40 text-[#DFC07D] text-xs font-serif italic">
+          <div className="px-3 py-1 rounded-full bg-[#C5A059]/20 border border-[#C5A059]/40 text-[#DFC07D] text-[12px] font-sans font-semibold">
             Confirmado con amor
           </div>
         </div>
@@ -78,10 +78,10 @@ export function PassQR({ guest, event, tableName }: PassQRProps) {
         {/* Guest Details */}
         <div className="my-5 space-y-3">
           <div>
-            <span className="text-[10px] text-zinc-400 uppercase tracking-widest font-sans block">
+            <span className="text-[11px] text-zinc-400 uppercase tracking-widest font-sans font-semibold block">
               Reservado especialmente para
             </span>
-            <p className="font-serif italic text-2xl text-white font-medium">
+            <p className="font-serif text-2xl text-white font-normal">
               {guest.familyName}
             </p>
           </div>
@@ -90,9 +90,9 @@ export function PassQR({ guest, event, tableName }: PassQRProps) {
             <div className="p-3 rounded-2xl bg-white/5 border border-white/10">
               <div className="flex items-center gap-1.5 text-zinc-400 text-xs mb-1">
                 <Users className="w-3.5 h-3.5 text-[#DFC07D]" />
-                <span className="font-sans text-[11px]">Lugares</span>
+                <span className="font-sans text-[12px]">Lugares</span>
               </div>
-              <span className="text-xl font-serif font-bold text-white">
+              <span className="text-xl font-sans font-bold text-white">
                 {guest.confirmedSeats || guest.maxSeats} {guest.confirmedSeats === 1 ? "persona" : "personas"}
               </span>
             </div>
@@ -100,9 +100,9 @@ export function PassQR({ guest, event, tableName }: PassQRProps) {
             <div className="p-3 rounded-2xl bg-white/5 border border-white/10">
               <div className="flex items-center gap-1.5 text-zinc-400 text-xs mb-1">
                 <MapPin className="w-3.5 h-3.5 text-[#DFC07D]" />
-                <span className="font-sans text-[11px]">Tu Mesa</span>
+                <span className="font-sans text-[12px]">Tu Mesa</span>
               </div>
-              <span className="text-sm font-serif italic font-semibold text-[#DFC07D] truncate block">
+              <span className="text-[13px] font-sans font-semibold text-[#DFC07D] truncate block">
                 {tableName || "Asignada al llegar"}
               </span>
             </div>
@@ -118,10 +118,10 @@ export function PassQR({ guest, event, tableName }: PassQRProps) {
             includeMargin={false}
           />
           <div className="mt-3 text-center">
-            <p className="font-serif italic text-xs text-[#7A5C30]">
+            <p className="font-sans font-semibold text-[13px] text-[#7A5C30]">
               Tu pase de bienvenida
             </p>
-            <p className="text-[11px] text-carbon-500 font-sans mt-0.5">
+            <p className="text-[12px] text-zinc-600 font-sans mt-0.5">
               Muéstralo al llegar, nos hará muy felices verte
             </p>
           </div>
@@ -130,12 +130,12 @@ export function PassQR({ guest, event, tableName }: PassQRProps) {
         {/* Status */}
         <div className="text-center mb-5">
           {guest.checkedInAt ? (
-            <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-emerald-500/20 text-emerald-300 border border-emerald-500/30 text-xs font-serif italic">
+            <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-emerald-500/20 text-emerald-300 border border-emerald-500/30 text-[13px] font-sans font-semibold">
               <Check className="w-3.5 h-3.5" />
               <span>¡Ya estás con nosotros en la fiesta!</span>
             </div>
           ) : (
-            <p className="text-xs text-zinc-300 font-serif italic leading-relaxed">
+            <p className="text-[13px] text-zinc-300 font-sans leading-relaxed">
               Al llegar a {event.venueName}, el equipo de recepción te recibirá con una sonrisa.
             </p>
           )}
@@ -145,7 +145,7 @@ export function PassQR({ guest, event, tableName }: PassQRProps) {
         <div className="grid grid-cols-2 gap-2 pt-2 border-t border-white/10">
           <button
             onClick={handleShareWhatsApp}
-            className="flex items-center justify-center gap-2 px-3 py-2.5 rounded-xl bg-emerald-700 hover:bg-emerald-600 text-white text-xs font-medium transition-all shadow-md"
+            className="flex items-center justify-center gap-2 px-3 py-2.5 rounded-xl bg-emerald-700 hover:bg-emerald-600 text-white text-[13px] font-sans font-medium transition-all shadow-md"
           >
             <Send className="w-3.5 h-3.5" />
             <span>Guardar en WhatsApp</span>
@@ -153,7 +153,7 @@ export function PassQR({ guest, event, tableName }: PassQRProps) {
 
           <button
             onClick={handleCopyLink}
-            className="flex items-center justify-center gap-2 px-3 py-2.5 rounded-xl bg-white/10 hover:bg-white/20 text-white text-xs font-medium transition-all"
+            className="flex items-center justify-center gap-2 px-3 py-2.5 rounded-xl bg-white/10 hover:bg-white/20 text-white text-[13px] font-sans font-medium transition-all"
           >
             {copied ? <Check className="w-3.5 h-3.5 text-emerald-400" /> : <Share2 className="w-3.5 h-3.5" />}
             <span>{copied ? "¡Enlace copiado!" : "Compartir pase"}</span>
