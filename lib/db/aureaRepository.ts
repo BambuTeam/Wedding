@@ -451,7 +451,7 @@ export class AureaRepository {
     }
 
     memTenants[tenantId] = { ...updatedTenant };
-    const magicUrl = `/dashboard?account=${accountCode}&pin=${accessPin}&eventId=${eventId}`;
+    const magicUrl = `/dashboard?account=${accountCode}&pin=${accessPin}`;
 
     return {
       tenant: updatedTenant,

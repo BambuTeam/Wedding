@@ -45,12 +45,15 @@ export function CredentialsSuccessModal({
   try {
     if (data.accessUrl.startsWith("http")) {
       const parsed = new URL(data.accessUrl);
-      computedAccessUrl = `${currentOrigin}${parsed.pathname}${parsed.search}`;
+      parsed.searchParams.delete("eventId");
+      computedAccessUrl = parsed.toString();
     } else if (data.accessUrl.startsWith("/")) {
-      computedAccessUrl = `${currentOrigin}${data.accessUrl}`;
+      const parsed = new URL(data.accessUrl, currentOrigin);
+      parsed.searchParams.delete("eventId");
+      computedAccessUrl = parsed.toString();
     }
   } catch (e) {
-    computedAccessUrl = `${currentOrigin}${data.accessUrl}`;
+    computedAccessUrl = `${currentOrigin}${data.accessUrl}`.replace(/&eventId=[^&]+/, "");
   }
 
   const handleCopyUrl = () => {
@@ -79,21 +82,27 @@ export function CredentialsSuccessModal({
     const targetPhone = cleanPhone.length >= 8 ? cleanPhone : "50255551234";
 
     const accountIdentifier = data.accountCode || data.email || "Código de cuenta";
+    const celebration = data.celebrationType || "Celebración";
 
-    // Usar secuencias Unicode explícitas (\u2728, \uD83D\uDD17, \uD83D\uDD10, \u2022) para evitar corrupción de encoding en cualquier SO/Navegador
-    const text = encodeURIComponent(
-      `\u2728 *¡BIENVENIDO A ÁUREA! TU ESPACIO ESTÁ ACTIVO* \u2728\n\n` +
-        `Hola *${data.clientName}*, tu acceso al panel de anfitrión para tu *${data.celebrationType || "Celebración"}* ha sido liberado con éxito.\n\n` +
-        `\uD83D\uDCBC *Código de Cuenta:* *${accountIdentifier}*\n` +
-        (data.email ? `\u2709\uFE0F *Correo registrado:* ${data.email}\n` : "") +
-        `\uD83D\uDD10 *PIN confidencial de acceso (6 dígitos):* *${data.accessPin}*\n\n` +
-        `\uD83D\uDD17 *Enlace directo a tu panel:* \n${computedAccessUrl}\n\n` +
-        `\u2022 Puedes iniciar sesión con tu Código de Cuenta (${accountIdentifier}) o tu correo electrónico más tu PIN de 6 dígitos.\n` +
-        `\u2022 Guarda este mensaje para ingresar cuando lo necesites.\n` +
-        `\u2022 ¡Estamos felices de acompañarte en este gran momento!`
-    );
+    const message =
+      `✨ *¡BIENVENIDO A ÁUREA!* ✨\n` +
+      `Tu espacio de anfitrión está activo\n\n` +
+      `Hola *${data.clientName}*, es un placer saludarte. Hemos preparado y liberado tu panel exclusivo para tu *${celebration}*.\n\n` +
+      `🗝️ *Tus Credenciales de Acceso:*\n` +
+      `• *Código de Cuenta:* *${accountIdentifier}*\n` +
+      `• *PIN Confidencial (6 dígitos):* *${data.accessPin}*\n` +
+      (data.email ? `• *Correo registrado:* ${data.email}\n` : "") +
+      `\n` +
+      `📲 *Enlace directo a tu panel:* \n${computedAccessUrl}\n\n` +
+      `Desde tu panel podrás:\n` +
+      `✓ Registrar a tus invitados y familias\n` +
+      `✓ Monitorear confirmaciones (RSVP) en vivo\n` +
+      `✓ Organizar el acomodo de tus mesas\n` +
+      `✓ Personalizar tu invitación con música y fotos\n\n` +
+      `💡 *Tip:* Guarda este mensaje para acceder rápidamente cuando lo necesites.\n` +
+      `¡Estamos felices de acompañarte en este gran momento! 🤍`;
 
-    window.open(`https://wa.me/${targetPhone}?text=${text}`, "_blank");
+    window.open(`https://wa.me/${targetPhone}?text=${encodeURIComponent(message)}`, "_blank");
   };
 
   return createPortal(

@@ -38,16 +38,28 @@ export async function POST(request: NextRequest) {
         process.env.NEXT_PUBLIC_APP_URL ||
         request.nextUrl.origin ||
         "http://localhost:3000";
-      const fullMagicUrl = `${origin}${releaseResult.magicUrl}`;
+      const fullMagicUrl = `${origin}${releaseResult.magicUrl}`.replace(/&eventId=[^&]+/, "");
+
+      const accountIdentifier = releaseResult.tenant.accountCode || releaseResult.tenant.tenantId;
+      const celebration = releaseResult.tenant.celebrationType || "Celebración";
 
       const waText = encodeURIComponent(
-        `\u2728 *¡BIENVENIDO A ÁUREA! TU ESPACIO ESTÁ ACTIVO* \u2728\n\n` +
-          `Hola *${releaseResult.tenant.name}*, tu acceso al panel de anfitrión para tu *${releaseResult.tenant.celebrationType || "Celebración"}* ha sido liberado:\n\n` +
-          `\uD83D\uDCBC *Código de Cuenta:* *${releaseResult.tenant.accountCode || releaseResult.tenant.tenantId}*\n` +
-          `\u2709\uFE0F *Correo:* ${releaseResult.tenant.email}\n` +
-          `\uD83D\uDD10 *PIN de Acceso (6 dígitos):* *${releaseResult.tenant.accessPin}*\n\n` +
-          `\uD83D\uDD17 *Enlace directo a tu panel:* \n${fullMagicUrl}\n\n` +
-          `\u2022 Desde aquí podrás registrar a tus invitados, acomodar tus mesas en el jardín y monitorear confirmaciones en tiempo real.`
+        `✨ *¡BIENVENIDO A ÁUREA!* ✨\n` +
+        `Tu espacio de anfitrión está activo\n\n` +
+        `Hola *${releaseResult.tenant.name}*, es un placer saludarte. Hemos preparado y liberado tu panel exclusivo para tu *${celebration}*.\n\n` +
+        `🗝️ *Tus Credenciales de Acceso:*\n` +
+        `• *Código de Cuenta:* *${accountIdentifier}*\n` +
+        `• *PIN Confidencial (6 dígitos):* *${releaseResult.tenant.accessPin}*\n` +
+        (releaseResult.tenant.email ? `• *Correo registrado:* ${releaseResult.tenant.email}\n` : "") +
+        `\n` +
+        `📲 *Enlace directo a tu panel:* \n${fullMagicUrl}\n\n` +
+        `Desde tu panel podrás:\n` +
+        `✓ Registrar a tus invitados y familias\n` +
+        `✓ Monitorear confirmaciones (RSVP) en vivo\n` +
+        `✓ Organizar el acomodo de tus mesas\n` +
+        `✓ Personalizar tu invitación con música y fotos\n\n` +
+        `💡 *Tip:* Guarda este mensaje para acceder rápidamente cuando lo necesites.\n` +
+        `¡Estamos felices de acompañarte en este gran momento! 🤍`
       );
 
       return NextResponse.json({
@@ -119,16 +131,26 @@ export async function POST(request: NextRequest) {
       process.env.NEXT_PUBLIC_APP_URL ||
       request.nextUrl.origin ||
       "http://localhost:3000";
-    const fullMagicUrl = `${origin}${releaseResult.magicUrl}`;
+    const fullMagicUrl = `${origin}${releaseResult.magicUrl}`.replace(/&eventId=[^&]+/, "");
+    const accountIdentifier = releaseResult.tenant.accountCode || releaseResult.tenant.tenantId;
 
     const waText = encodeURIComponent(
-      `\u2728 *¡BIENVENIDO A ÁUREA! TU ESPACIO ESTÁ ACTIVO* \u2728\n\n` +
-        `Hola *${clientName}*, tu acceso al panel de anfitrión para tu *${celebrationType}* ha sido liberado:\n\n` +
-        `\uD83D\uDCBC *Código de Cuenta:* *${releaseResult.tenant.accountCode || releaseResult.tenant.tenantId}*\n` +
-        `\u2709\uFE0F *Correo:* ${email}\n` +
-        `\uD83D\uDD10 *PIN de Acceso (6 dígitos):* *${releaseResult.tenant.accessPin}*\n\n` +
-        `\uD83D\uDD17 *Enlace directo:* \n${fullMagicUrl}\n\n` +
-        `\u2022 Desde aquí podrás registrar a tus invitados y diseñar tu evento en tiempo real.`
+      `✨ *¡BIENVENIDO A ÁUREA!* ✨\n` +
+      `Tu espacio de anfitrión está activo\n\n` +
+      `Hola *${clientName}*, es un placer saludarte. Hemos preparado y liberado tu panel exclusivo para tu *${celebrationType}*.\n\n` +
+      `🗝️ *Tus Credenciales de Acceso:*\n` +
+      `• *Código de Cuenta:* *${accountIdentifier}*\n` +
+      `• *PIN Confidencial (6 dígitos):* *${releaseResult.tenant.accessPin}*\n` +
+      (email ? `• *Correo registrado:* ${email}\n` : "") +
+      `\n` +
+      `📲 *Enlace directo a tu panel:* \n${fullMagicUrl}\n\n` +
+      `Desde tu panel podrás:\n` +
+      `✓ Registrar a tus invitados y familias\n` +
+      `✓ Monitorear confirmaciones (RSVP) en vivo\n` +
+      `✓ Organizar el acomodo de tus mesas\n` +
+      `✓ Personalizar tu invitación con música y fotos\n\n` +
+      `💡 *Tip:* Guarda este mensaje para acceder rápidamente cuando lo necesites.\n` +
+      `¡Estamos felices de acompañarte en este gran momento! 🤍`
     );
 
     return NextResponse.json({
@@ -182,15 +204,19 @@ export async function PATCH(request: NextRequest) {
         "http://localhost:3000";
 
       const directUrl = `${origin}/dashboard?account=${updatedTenant.accountCode || updatedTenant.tenantId}&pin=${updatedTenant.accessPin}`;
+      const accountIdentifier = updatedTenant.accountCode || updatedTenant.tenantId;
+      const celebration = updatedTenant.celebrationType || "Celebración";
 
       const waText = encodeURIComponent(
-        `\uD83D\uDD10 *ÁUREA · NUEVO PIN DE SEGURIDAD GENERADO* \uD83D\uDD10\n\n` +
-          `Hola *${updatedTenant.name}*, tu PIN confidencial de acceso para tu *${updatedTenant.celebrationType || "Celebración"}* ha sido restablecido:\n\n` +
-          `\uD83D\uDCBC *Código de Cuenta:* *${updatedTenant.accountCode || updatedTenant.tenantId}*\n` +
-          `\u2709\uFE0F *Correo:* ${updatedTenant.email}\n` +
-          `\uD83D\uDD11 *Nuevo PIN Privado (6 dígitos):* *${updatedTenant.accessPin}*\n\n` +
-          `\uD83D\uDD17 *Enlace directo al panel:* \n${directUrl}\n\n` +
-          `\u2022 Guarda este mensaje en un lugar seguro para ingresar cuando lo necesites.`
+        `✨ *ÁUREA · ACTUALIZACIÓN DE SEGURIDAD* ✨\n\n` +
+        `Hola *${updatedTenant.name}*, tu PIN confidencial de acceso para tu *${celebration}* ha sido actualizado exitosamente.\n\n` +
+        `🗝️ *Tus Nuevas Credenciales:*\n` +
+        `• *Código de Cuenta:* *${accountIdentifier}*\n` +
+        `• *Nuevo PIN Confidencial (6 dígitos):* *${updatedTenant.accessPin}*\n` +
+        (updatedTenant.email ? `• *Correo registrado:* ${updatedTenant.email}\n` : "") +
+        `\n` +
+        `📲 *Enlace directo al panel:* \n${directUrl}\n\n` +
+        `Tu PIN anterior ha quedado invalidado por seguridad. Guarda este mensaje para tus próximos ingresos. 🤍`
       );
 
       return NextResponse.json({

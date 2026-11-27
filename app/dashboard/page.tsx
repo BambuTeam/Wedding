@@ -297,10 +297,10 @@ export default function DashboardPage() {
   // B. Cliente con activación pendiente (PENDING_RELEASE)
   if (sessionData && !sessionData.valid && sessionData.reason === "PENDING_RELEASE") {
     const waText = encodeURIComponent(
-      `\u2728 *CONSULTA DE ACTIVACIÓN AUREA* \u2728\n\n` +
-      `Hola Áurea, soy *${sessionData.tenantName || "Anfitrión"}*.\n` +
-      `Registré mi solicitud para mi *${sessionData.celebrationType || "Celebración"}* y quisiera consultar sobre la liberación de mi panel de anfitrión.\n\n` +
-      `¡Muchas gracias!`
+      `✨ *CONSULTA DE ACTIVACIÓN ÁUREA* ✨\n\n` +
+      `Hola equipo Áurea, soy *${sessionData.tenantName || "Anfitrión"}*.\n` +
+      `Registré mi solicitud para mi *${sessionData.celebrationType || "Celebración"}* y quisiera consultar sobre la activación de mi panel de anfitrión.\n\n` +
+      `¡Muchas gracias! 🤍`
     );
     const waLink = `https://wa.me/50255551234?text=${waText}`;
 
