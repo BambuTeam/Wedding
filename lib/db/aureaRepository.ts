@@ -4,6 +4,7 @@ import {
   UpdateCommand,
   QueryCommand,
   ScanCommand,
+  DeleteCommand,
 } from "@aws-sdk/lib-dynamodb";
 import { docClient, TABLE_NAME, dynamoClient } from "../aws/dynamodb";
 import {
@@ -101,8 +102,13 @@ export class AureaRepository {
    * Asegura la inserción de datos semilla (Seed Inicial) si la tabla EventosPlatform está vacía.
    */
   static async ensureSeedData(): Promise<void> {
-    const demoEventId = "camila-andres-2026";
+    const demoEventId = "camila-andres-2025";
     const demoTenantId = "tenant_camilandres";
+
+    // Limpiar duplicado histórico si existiera
+    if (memEvents["camila-andres-2026"]) {
+      delete memEvents["camila-andres-2026"];
+    }
 
     try {
       // 1. Probar lectura en DynamoDB
@@ -251,24 +257,6 @@ export class AureaRepository {
       console.log(`[AureaRepository] Evento semilla '${demoEventId}' insertado con éxito.`);
     } catch (error: any) {
       console.warn("[AureaRepository.ensureSeedData] Fallback en memoria activado o tabla inaccesible:", error?.message);
-      // Sembrar en memoria si no estaba
-      if (!memEvents[demoEventId]) {
-        const base = memEvents["camila-andres-2025"];
-        memEvents[demoEventId] = {
-          ...base,
-          eventId: demoEventId,
-          title: "Camila & Andrés — Antigua Guatemala",
-          tenantId: demoTenantId,
-          active: true,
-          status: "LIVE",
-          maxGuestsLimit: 200,
-          isArchived: false,
-          isLocked: false,
-        };
-        memGuests[demoEventId] = JSON.parse(JSON.stringify(memGuests["camila-andres-2025"] || []));
-        memTables[demoEventId] = JSON.parse(JSON.stringify(memTables["camila-andres-2025"] || []));
-        memPhotos[demoEventId] = JSON.parse(JSON.stringify(memPhotos["camila-andres-2025"] || []));
-      }
     }
   }
 
@@ -552,6 +540,40 @@ export class AureaRepository {
     }
 
     return eventsFound;
+  }
+
+  /**
+   * Elimina un cliente y sus eventos asociados (Control exclusivo de Root SuperAdmin)
+   */
+  static async deleteTenant(tenantId: string): Promise<boolean> {
+    try {
+      const tenant = await this.getTenant(tenantId);
+      await docClient.send(
+        new DeleteCommand({
+          TableName: TABLE_NAME,
+          Key: {
+            PK: `TENANT#${tenantId}`,
+            SK: "PROFILE",
+          },
+        })
+      );
+      if (tenant?.primaryEventId) {
+        await docClient.send(
+          new DeleteCommand({
+            TableName: TABLE_NAME,
+            Key: {
+              PK: `EVENT#${tenant.primaryEventId}`,
+              SK: "META",
+            },
+          })
+        );
+        delete memEvents[tenant.primaryEventId];
+      }
+    } catch (err: any) {
+      console.warn("[AureaRepository.deleteTenant] Fallback en memoria:", err?.message);
+    }
+    delete memTenants[tenantId];
+    return true;
   }
 
   /**
@@ -842,10 +864,23 @@ export class AureaRepository {
       allMeta = Object.values(memEvents);
     }
 
+    // Filtrar duplicados demo (e.g. camila-andres-2026 si ya existe camila-andres-2025)
+    const uniqueMeta: EventMeta[] = [];
+    const seenEventIds = new Set<string>();
+    for (const m of allMeta) {
+      if (m.eventId === "camila-andres-2026" && allMeta.some((x) => x.eventId === "camila-andres-2025")) {
+        continue;
+      }
+      if (!seenEventIds.has(m.eventId)) {
+        seenEventIds.add(m.eventId);
+        uniqueMeta.push(m);
+      }
+    }
+
     // Calcular métricas vivas para cada evento
     const result: EventDirectoryItem[] = [];
 
-    for (const meta of allMeta) {
+    for (const meta of uniqueMeta) {
       const guests = await this.getGuests(meta.eventId);
       const tables = await this.getTables(meta.eventId);
       const photos = await this.getPhotos(meta.eventId);

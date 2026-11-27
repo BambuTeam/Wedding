@@ -13,12 +13,11 @@ import {
 import { RootNavbar } from '@/components/root/RootNavbar';
 import { RootKpiSection } from '@/components/root/RootKpiSection';
 import { PendingReleaseInbox } from '@/components/root/PendingReleaseInbox';
-import { EventsDirectory } from '@/components/root/EventsDirectory';
-import { TenantsDirectory } from '@/components/root/TenantsDirectory';
+import { UnifiedClientsDirectory } from '@/components/root/UnifiedClientsDirectory';
+import { RootTenantControlDrawer } from '@/components/root/RootTenantControlDrawer';
 import { CredentialsSuccessModal } from '@/components/root/CredentialsSuccessModal';
 import { CreateClientModal } from '@/components/root/CreateClientModal';
 import {
-  CalendarDays,
   Inbox,
   Users,
   Plus,
@@ -29,8 +28,8 @@ import {
 export default function RootDashboardPage() {
   const router = useRouter();
 
-  // Navigation State
-  const [activeTab, setActiveTab] = useState<'inbox' | 'events' | 'tenants'>('inbox');
+  // Navigation State - Vista Maestra Unificada Activa por Defecto
+  const [activeTab, setActiveTab] = useState<'clients' | 'inbox'>('clients');
   const [loading, setLoading] = useState(true);
   const [isRefreshing, setIsRefreshing] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -45,6 +44,12 @@ export default function RootDashboardPage() {
     connected: true,
     table: 'EventosPlatform',
   });
+
+  // Drawer & Modals State
+  const [selectedTenantForDrawer, setSelectedTenantForDrawer] = useState<{
+    tenant: Tenant;
+    linkedEvent?: EventDirectoryItem | null;
+  } | null>(null);
 
   // Modals State
   const [credentialsData, setCredentialsData] = useState<{
@@ -338,10 +343,26 @@ export default function RootDashboardPage() {
 
         {/* Tabs and Module View */}
         <section className="space-y-6">
-          {/* Tab Navigation Bar */}
+          {/* Tab Navigation Bar - Solo 2 Vistas Claras */}
           <div className="border-b border-zinc-200/80 flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-4">
             <div className="flex items-center gap-2 overflow-x-auto pb-px">
-              {/* Tab: Bandeja de Liberación */}
+              {/* Tab 1: Clientes & Celebraciones (Vista Maestra Unificada - Activa por defecto) */}
+              <button
+                onClick={() => setActiveTab('clients')}
+                className={`flex items-center gap-2.5 px-4 py-3 text-sm font-semibold border-b-2 transition-all whitespace-nowrap ${
+                  activeTab === 'clients'
+                    ? 'border-zinc-950 text-zinc-950'
+                    : 'border-transparent text-zinc-500 hover:text-zinc-800 hover:border-zinc-300'
+                }`}
+              >
+                <Users className="w-4 h-4" />
+                <span>Clientes & Celebraciones</span>
+                <span className="px-2 py-0.5 rounded-full text-xs font-semibold bg-zinc-100 text-zinc-700">
+                  {tenants.length}
+                </span>
+              </button>
+
+              {/* Tab 2: Bandeja de Liberación */}
               <button
                 onClick={() => setActiveTab('inbox')}
                 className={`flex items-center gap-2.5 px-4 py-3 text-sm font-semibold border-b-2 transition-all whitespace-nowrap ${
@@ -357,38 +378,6 @@ export default function RootDashboardPage() {
                     {pendingTenants.length}
                   </span>
                 )}
-              </button>
-
-              {/* Tab: Directorio de Celebraciones */}
-              <button
-                onClick={() => setActiveTab('events')}
-                className={`flex items-center gap-2.5 px-4 py-3 text-sm font-semibold border-b-2 transition-all whitespace-nowrap ${
-                  activeTab === 'events'
-                    ? 'border-zinc-950 text-zinc-950'
-                    : 'border-transparent text-zinc-500 hover:text-zinc-800 hover:border-zinc-300'
-                }`}
-              >
-                <CalendarDays className="w-4 h-4" />
-                <span>Directorio de Celebraciones</span>
-                <span className="px-2 py-0.5 rounded-full text-xs font-medium bg-zinc-100 text-zinc-600">
-                  {events.length}
-                </span>
-              </button>
-
-              {/* Tab: Directorio de Clientes */}
-              <button
-                onClick={() => setActiveTab('tenants')}
-                className={`flex items-center gap-2.5 px-4 py-3 text-sm font-semibold border-b-2 transition-all whitespace-nowrap ${
-                  activeTab === 'tenants'
-                    ? 'border-zinc-950 text-zinc-950'
-                    : 'border-transparent text-zinc-500 hover:text-zinc-800 hover:border-zinc-300'
-                }`}
-              >
-                <Users className="w-4 h-4" />
-                <span>Clientes & Cuentas</span>
-                <span className="px-2 py-0.5 rounded-full text-xs font-medium bg-zinc-100 text-zinc-600">
-                  {tenants.length}
-                </span>
               </button>
             </div>
 
@@ -414,29 +403,24 @@ export default function RootDashboardPage() {
             </div>
           ) : (
             <>
+              {activeTab === 'clients' && (
+                <UnifiedClientsDirectory
+                  tenants={tenants}
+                  events={events}
+                  onOpenManageDrawer={(tenant, linkedEvent) =>
+                    setSelectedTenantForDrawer({ tenant, linkedEvent })
+                  }
+                  onShowCredentials={handleShowCredentials}
+                  onRefresh={loadData}
+                />
+              )}
+
               {activeTab === 'inbox' && (
                 <PendingReleaseInbox
                   pendingTenants={pendingTenants}
                   isReleasing={releasingId}
                   onRelease={handleRelease}
                   onOpenCreateModal={() => setCreateModalOpen(true)}
-                />
-              )}
-
-              {activeTab === 'events' && (
-                <EventsDirectory
-                  events={events}
-                  onToggleStatus={handleUpdateEventStatus}
-                  onSaveLimits={handleSaveEventLimits}
-                />
-              )}
-
-              {activeTab === 'tenants' && (
-                <TenantsDirectory
-                  tenants={tenants}
-                  onToggleStatus={handleToggleTenantStatus}
-                  onShowCredentials={handleShowCredentials}
-                  onRefresh={loadData}
                 />
               )}
             </>
@@ -459,6 +443,16 @@ export default function RootDashboardPage() {
           </div>
         </div>
       </footer>
+
+      {/* Drawer de Control Total Exclusivo del SuperAdmin */}
+      <RootTenantControlDrawer
+        isOpen={Boolean(selectedTenantForDrawer)}
+        onClose={() => setSelectedTenantForDrawer(null)}
+        tenant={selectedTenantForDrawer?.tenant || null}
+        linkedEvent={selectedTenantForDrawer?.linkedEvent || null}
+        onRefresh={loadData}
+        onShowCredentialsModal={handleShowCredentials}
+      />
 
       {/* Modals */}
       <CredentialsSuccessModal

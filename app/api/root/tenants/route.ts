@@ -234,10 +234,20 @@ export async function PATCH(request: NextRequest) {
     if (status) updates.status = status;
     if (plan) updates.plan = plan;
     if (maxGuestsPerEvent) updates.maxGuestsPerEvent = Number(maxGuestsPerEvent);
-    if (amountPaid) {
+    if (amountPaid !== undefined) {
       updates.amountPaid = Number(amountPaid);
       updates.paidAmountGTQ = Number(amountPaid);
     }
+    if (body.paidAmountGTQ !== undefined) {
+      updates.paidAmountGTQ = Number(body.paidAmountGTQ);
+      updates.amountPaid = Number(body.paidAmountGTQ);
+    }
+    if (body.name) updates.name = body.name.trim();
+    if (body.email) updates.email = body.email.trim();
+    if (body.phone) updates.phone = body.phone.trim();
+    if (body.role) updates.role = body.role;
+    if (body.paymentStatus) updates.paymentStatus = body.paymentStatus;
+    if (body.celebrationType) updates.celebrationType = body.celebrationType;
 
     const updated = await AureaRepository.updateTenant(tenantId, updates);
     if (!updated) {
@@ -252,6 +262,33 @@ export async function PATCH(request: NextRequest) {
     console.error("[PATCH /api/root/tenants] Error:", err);
     return NextResponse.json(
       { error: err?.message || "Error al actualizar cliente." },
+      { status: 500 }
+    );
+  }
+}
+
+export async function DELETE(request: NextRequest) {
+  try {
+    const { searchParams } = new URL(request.url);
+    const tenantId = searchParams.get("tenantId");
+
+    if (!tenantId) {
+      return NextResponse.json(
+        { error: "tenantId es requerido para eliminar." },
+        { status: 400 }
+      );
+    }
+
+    await AureaRepository.deleteTenant(tenantId);
+
+    return NextResponse.json({
+      success: true,
+      message: `Cliente ${tenantId} y sus eventos fueron eliminados correctamente.`,
+    });
+  } catch (err: any) {
+    console.error("[DELETE /api/root/tenants] Error:", err);
+    return NextResponse.json(
+      { error: err?.message || "Error al eliminar cliente." },
       { status: 500 }
     );
   }

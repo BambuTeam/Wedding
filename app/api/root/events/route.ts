@@ -18,7 +18,7 @@ export async function GET() {
 export async function PATCH(request: NextRequest) {
   try {
     const body = await request.json();
-    const { eventId, status, isLocked, maxGuestsLimit, plan } = body;
+    const { eventId, status, isLocked, maxGuestsLimit, plan, title, eventDate, venueName } = body;
 
     if (!eventId) {
       return NextResponse.json(
@@ -29,6 +29,17 @@ export async function PATCH(request: NextRequest) {
 
     let updatedEvent = null;
 
+    if (title || eventDate || venueName) {
+      const metaUpdates: any = {};
+      if (title) metaUpdates.title = title.trim();
+      if (eventDate) {
+        metaUpdates.eventDate = eventDate;
+        metaUpdates.eventDateFormatted = eventDate;
+      }
+      if (venueName) metaUpdates.venueName = venueName.trim();
+      await AureaRepository.updateEventMeta(eventId, metaUpdates);
+    }
+
     if (status) {
       updatedEvent = await AureaRepository.updateEventStatus(
         eventId,
@@ -37,12 +48,16 @@ export async function PATCH(request: NextRequest) {
       );
     }
 
-    if (maxGuestsLimit) {
+    if (maxGuestsLimit || plan) {
       updatedEvent = await AureaRepository.updateEventLimits(
         eventId,
-        Number(maxGuestsLimit),
-        plan as PlanType
+        Number(maxGuestsLimit) || 200,
+        (plan as PlanType) || "FIRMA"
       );
+    }
+
+    if (!updatedEvent) {
+      updatedEvent = await AureaRepository.getEventMeta(eventId);
     }
 
     if (!updatedEvent) {
