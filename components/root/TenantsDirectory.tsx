@@ -1,6 +1,7 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
+import { createPortal } from 'react-dom';
 import { Tenant, TenantRole, TenantStatus } from '@/lib/types';
 import {
   Users,
@@ -29,11 +30,26 @@ export function TenantsDirectory({
   onShowCredentials,
   onRefresh,
 }: TenantsDirectoryProps) {
+  const [mounted, setMounted] = useState(false);
   const [searchTerm, setSearchTerm] = useState('');
   const [roleFilter, setRoleFilter] = useState<'ALL' | TenantRole>('ALL');
   const [statusFilter, setStatusFilter] = useState<'ALL' | TenantStatus>('ALL');
-  const [actionMenuOpen, setActionMenuOpen] = useState<string | null>(null);
+  const [activeMenu, setActiveMenu] = useState<{
+    tenant: Tenant;
+    rect: DOMRect;
+  } | null>(null);
   const [loadingId, setLoadingId] = useState<string | null>(null);
+
+  useEffect(() => {
+    setMounted(true);
+    const handleScrollOrResize = () => setActiveMenu(null);
+    window.addEventListener('scroll', handleScrollOrResize, true);
+    window.addEventListener('resize', handleScrollOrResize);
+    return () => {
+      window.removeEventListener('scroll', handleScrollOrResize, true);
+      window.removeEventListener('resize', handleScrollOrResize);
+    };
+  }, []);
 
   const filteredTenants = tenants.filter((tenant) => {
     const matchesSearch =
@@ -50,7 +66,7 @@ export function TenantsDirectory({
   });
 
   const handleToggle = async (tenant: Tenant) => {
-    setActionMenuOpen(null);
+    setActiveMenu(null);
     setLoadingId(tenant.tenantId);
     try {
       await onToggleStatus(tenant.tenantId, tenant.status);
@@ -60,7 +76,7 @@ export function TenantsDirectory({
   };
 
   const handleResetPin = async (tenant: Tenant) => {
-    setActionMenuOpen(null);
+    setActiveMenu(null);
     const confirmed = window.confirm(
       `¿Deseas restablecer el PIN de acceso para "${tenant.name}"? El PIN actual quedará invalidado inmediatamente y se generará uno nuevo de 6 dígitos.`
     );
@@ -190,7 +206,7 @@ export function TenantsDirectory({
                 </tr>
               ) : (
                 filteredTenants.map((tenant) => {
-                  const isMenuOpen = actionMenuOpen === tenant.tenantId;
+                  const isMenuOpen = activeMenu?.tenant.tenantId === tenant.tenantId;
                   const isLoading = loadingId === tenant.tenantId;
 
                   const cleanPhone = tenant.phone.replace(/[^0-9]/g, '');
@@ -319,80 +335,25 @@ export function TenantsDirectory({
                             )}
 
                             <button
-                              onClick={() => setActionMenuOpen(isMenuOpen ? null : tenant.tenantId)}
-                              className="min-h-[44px] min-w-[44px] flex items-center justify-center text-zinc-400 hover:text-zinc-800 hover:bg-zinc-100 rounded-lg transition-colors"
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                if (isMenuOpen) {
+                                  setActiveMenu(null);
+                                } else {
+                                  const rect = e.currentTarget.getBoundingClientRect();
+                                  setActiveMenu({ tenant, rect });
+                                }
+                              }}
+                              title="Más acciones"
+                              className={`min-h-[44px] min-w-[44px] flex items-center justify-center rounded-lg transition-colors ${
+                                isMenuOpen
+                                  ? 'text-zinc-900 bg-zinc-200'
+                                  : 'text-zinc-400 hover:text-zinc-800 hover:bg-zinc-100'
+                              }`}
                             >
                               <MoreVertical className="w-4 h-4" />
                             </button>
                           </div>
-
-                          {/* Dropdown Menu */}
-                          {isMenuOpen && (
-                            <>
-                              <div
-                                className="fixed inset-0 z-20"
-                                onClick={() => setActionMenuOpen(null)}
-                              />
-                              <div className="absolute right-0 mt-1 w-52 bg-white rounded-xl shadow-xl border border-zinc-200 py-1.5 z-30 text-xs">
-                                {tenant.accessPin && (
-                                  <>
-                                    <button
-                                      onClick={() => {
-                                        setActionMenuOpen(null);
-                                        onShowCredentials(tenant);
-                                      }}
-                                      className="w-full text-left px-3 py-2.5 min-h-[44px] text-zinc-700 hover:bg-zinc-50 flex items-center gap-2"
-                                    >
-                                      <Key className="w-4 h-4 text-zinc-400" />
-                                      <span>Credenciales & Enlace</span>
-                                    </button>
-
-                                    <button
-                                      onClick={() => handleResetPin(tenant)}
-                                      disabled={isLoading}
-                                      className="w-full text-left px-3 py-2.5 min-h-[44px] text-zinc-700 hover:bg-amber-50 hover:text-amber-800 flex items-center gap-2"
-                                    >
-                                      <RotateCcw className="w-4 h-4 text-amber-600" />
-                                      <span>Resetear PIN (6 dígitos)</span>
-                                    </button>
-                                  </>
-                                )}
-
-                                <a
-                                  href={waUrl}
-                                  target="_blank"
-                                  rel="noopener noreferrer"
-                                  className="w-full text-left px-3 py-2.5 min-h-[44px] text-zinc-700 hover:bg-zinc-50 flex items-center gap-2"
-                                  onClick={() => setActionMenuOpen(null)}
-                                >
-                                  <MessageCircle className="w-4 h-4 text-emerald-600" />
-                                  <span>Escribir por WhatsApp</span>
-                                </a>
-
-                                <div className="border-t border-zinc-100 my-1" />
-
-                                {tenant.status === 'ACTIVE' ? (
-                                  <button
-                                    disabled={isLoading}
-                                    onClick={() => handleToggle(tenant)}
-                                    className="w-full text-left px-3 py-2.5 min-h-[44px] text-rose-600 hover:bg-rose-50 flex items-center gap-2"
-                                  >
-                                    <Ban className="w-4 h-4" />
-                                    <span>Suspender Cliente</span>
-                                  </button>
-                                ) : (
-                                  <button
-                                    disabled={isLoading}
-                                    onClick={() => handleToggle(tenant)}
-                                    className="w-full text-left px-3 py-2.5 min-h-[44px] text-emerald-600 hover:bg-emerald-50 flex items-center gap-2"
-                                  >
-                                    <CheckCircle2 className="w-4 h-4" />
-                                    <span>Reactivar Cliente</span>
-                                  </button>
-                                )}
-                              </div>
-                            </>
-                          )}
                         </div>
                       </td>
                     </tr>
@@ -403,6 +364,108 @@ export function TenantsDirectory({
           </table>
         </div>
       </div>
+
+      {/* Portal Flotante de Acciones: Se renderiza en document.body para evitar recorte por overflow */}
+      {activeMenu && mounted && createPortal(
+        <>
+          <div
+            className="fixed inset-0 z-[9998]"
+            onClick={() => setActiveMenu(null)}
+          />
+          <div
+            style={{
+              position: 'fixed',
+              top:
+                activeMenu.rect.bottom + 6 + 210 > window.innerHeight
+                  ? Math.max(12, activeMenu.rect.top - 210)
+                  : activeMenu.rect.bottom + 6,
+              left: Math.max(16, activeMenu.rect.right - 224),
+              width: 224,
+            }}
+            className="bg-white rounded-2xl shadow-2xl border border-zinc-200/90 py-1.5 z-[9999] text-xs font-sans animate-in fade-in zoom-in-95 duration-100 divide-y divide-zinc-100"
+          >
+            <div className="px-3.5 py-2 bg-zinc-50/70 border-b border-zinc-100">
+              <p className="font-bold text-zinc-900 truncate">{activeMenu.tenant.name}</p>
+              <p className="text-[11px] font-mono text-zinc-500">
+                {activeMenu.tenant.accountCode ? `Cuenta: ${activeMenu.tenant.accountCode}` : activeMenu.tenant.tenantId}
+              </p>
+            </div>
+
+            <div className="py-1">
+              {activeMenu.tenant.accessPin && (
+                <>
+                  <button
+                    onClick={() => {
+                      const t = activeMenu.tenant;
+                      setActiveMenu(null);
+                      onShowCredentials(t);
+                    }}
+                    className="w-full text-left px-3.5 py-2.5 min-h-[44px] text-zinc-700 hover:bg-zinc-50 hover:text-zinc-950 flex items-center gap-2.5 font-medium transition-colors"
+                  >
+                    <Key className="w-4 h-4 text-zinc-500 shrink-0" />
+                    <span>Credenciales & Enlace</span>
+                  </button>
+
+                  <button
+                    onClick={() => {
+                      const t = activeMenu.tenant;
+                      setActiveMenu(null);
+                      handleResetPin(t);
+                    }}
+                    disabled={loadingId === activeMenu.tenant.tenantId}
+                    className="w-full text-left px-3.5 py-2.5 min-h-[44px] text-zinc-700 hover:bg-amber-50 hover:text-amber-800 flex items-center gap-2.5 font-medium transition-colors"
+                  >
+                    <RotateCcw className="w-4 h-4 text-amber-600 shrink-0" />
+                    <span>Resetear PIN (6 dígitos)</span>
+                  </button>
+                </>
+              )}
+
+              <a
+                href={`https://wa.me/${activeMenu.tenant.phone.replace(/[^0-9]/g, '')}`}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="w-full text-left px-3.5 py-2.5 min-h-[44px] text-zinc-700 hover:bg-emerald-50 hover:text-emerald-800 flex items-center gap-2.5 font-medium transition-colors"
+                onClick={() => setActiveMenu(null)}
+              >
+                <MessageCircle className="w-4 h-4 text-emerald-600 shrink-0" />
+                <span>Escribir por WhatsApp</span>
+              </a>
+            </div>
+
+            <div className="py-1">
+              {activeMenu.tenant.status === 'ACTIVE' ? (
+                <button
+                  disabled={loadingId === activeMenu.tenant.tenantId}
+                  onClick={() => {
+                    const t = activeMenu.tenant;
+                    setActiveMenu(null);
+                    handleToggle(t);
+                  }}
+                  className="w-full text-left px-3.5 py-2.5 min-h-[44px] text-rose-600 hover:bg-rose-50 flex items-center gap-2.5 font-medium transition-colors"
+                >
+                  <Ban className="w-4 h-4 text-rose-600 shrink-0" />
+                  <span>Suspender Cliente</span>
+                </button>
+              ) : (
+                <button
+                  disabled={loadingId === activeMenu.tenant.tenantId}
+                  onClick={() => {
+                    const t = activeMenu.tenant;
+                    setActiveMenu(null);
+                    handleToggle(t);
+                  }}
+                  className="w-full text-left px-3.5 py-2.5 min-h-[44px] text-emerald-600 hover:bg-emerald-50 flex items-center gap-2.5 font-medium transition-colors"
+                >
+                  <CheckCircle2 className="w-4 h-4 text-emerald-600 shrink-0" />
+                  <span>Reactivar Cliente</span>
+                </button>
+              )}
+            </div>
+          </div>
+        </>,
+        document.body
+      )}
     </div>
   );
 }
