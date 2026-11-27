@@ -121,6 +121,30 @@ export function InvitationExperience({
   const [activeEditorialIndex, setActiveEditorialIndex] = useState<number | null>(null);
   const [isMounted, setIsMounted] = useState(false);
 
+  // Toast Editorial para feedback visual de subida de fotos
+  const [toast, setToast] = useState<{
+    visible: boolean;
+    type: "uploading" | "success" | "error";
+    message: string;
+    progress?: number;
+  }>({
+    visible: false,
+    type: "success",
+    message: "",
+    progress: 0,
+  });
+  const toastTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+
+  const showToast = (type: "uploading" | "success" | "error", message: string, progress?: number, duration: number = 4000) => {
+    if (toastTimeoutRef.current) clearTimeout(toastTimeoutRef.current);
+    setToast({ visible: true, type, message, progress });
+    if (type !== "uploading") {
+      toastTimeoutRef.current = setTimeout(() => {
+        setToast((prev) => ({ ...prev, visible: false }));
+      }, duration);
+    }
+  };
+
   useEffect(() => {
     setIsMounted(true);
   }, []);
@@ -631,52 +655,112 @@ export function InvitationExperience({
     }
   };
 
-  // Subida de fotografías al álbum colaborativo S3
+  // Compresión y redimensión en cliente con <canvas> (max 1600px, JPEG 0.85)
+  // Reduce fotos pesadas de teléfonos (8-15 MB) a ~350 KB para subida ultra rápida (< 1s)
+  const compressImage = async (file: File): Promise<Blob> => {
+    return new Promise((resolve, reject) => {
+      const reader = new FileReader();
+      reader.onload = (event) => {
+        const img = new Image();
+        img.onload = () => {
+          const maxDimension = 1600;
+          let width = img.width;
+          let height = img.height;
+
+          if (width > maxDimension || height > maxDimension) {
+            if (width > height) {
+              height = Math.round((height * maxDimension) / width);
+              width = maxDimension;
+            } else {
+              width = Math.round((width * maxDimension) / height);
+              height = maxDimension;
+            }
+          }
+
+          const canvas = document.createElement("canvas");
+          canvas.width = width;
+          canvas.height = height;
+          const ctx = canvas.getContext("2d");
+          if (!ctx) {
+            resolve(file);
+            return;
+          }
+
+          ctx.drawImage(img, 0, 0, width, height);
+          canvas.toBlob(
+            (blob) => {
+              if (blob) {
+                resolve(blob);
+              } else {
+                resolve(file);
+              }
+            },
+            "image/jpeg",
+            0.85
+          );
+        };
+        img.onerror = () => resolve(file);
+        img.src = event.target?.result as string;
+      };
+      reader.onerror = () => resolve(file);
+      reader.readAsDataURL(file);
+    });
+  };
+
+  // Subida de fotografías al álbum colaborativo S3 + DynamoDB con Toast Editorial
   const handlePhotoUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
 
+    // Reset input
+    e.target.value = "";
+
     setIsUploadingPhoto(true);
+    showToast("uploading", "Preparando y optimizando fotografía...", 25);
+
     try {
-      // 1. Obtener Presigned URL de S3
-      const urlRes = await fetch(`/api/events/${event.eventId}/upload-url`, {
+      // 1. Compresión en cliente
+      const compressedBlob = await compressImage(file);
+      showToast("uploading", "Subiendo al álbum en vivo...", 65);
+
+      // 2. Enviar FormData directamente al endpoint para evitar bloqueos de CORS entre el móvil y S3
+      const formData = new FormData();
+      formData.append("file", compressedBlob, file.name.replace(/\.[^/.]+$/, ".jpg"));
+      formData.append("author", photoAuthor || guest.familyName || "Invitado");
+      if (photoMessage) {
+        formData.append("message", photoMessage);
+      }
+
+      const res = await fetch(`/api/public/events/${event.eventId}/photos`, {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          filename: file.name,
-          contentType: file.type || "image/jpeg",
-          author: photoAuthor || guest.familyName,
-          message: photoMessage,
-        }),
+        body: formData,
       });
 
-      const urlData = await urlRes.json();
-      const photoPublicUrl = urlData.publicUrl || URL.createObjectURL(file);
+      const data = await res.json();
 
-      // 2. Registrar en la galería viva
-      setPhotos((prev) => [
-        {
-          url: photoPublicUrl,
-          author: photoAuthor || guest.familyName,
-          message: photoMessage,
-        },
-        ...prev,
-      ]);
+      if (!res.ok) {
+        throw new Error(data.error || "No se pudo subir la fotografía. Intenta de nuevo.");
+      }
+
+      showToast("uploading", "Guardando recuerdo...", 95);
+
+      // 3. Insertar inmediatamente en la galería viva
+      if (data.photo) {
+        setPhotos((prev) => [
+          {
+            url: data.photo.url,
+            author: data.photo.author,
+            message: data.photo.message,
+          },
+          ...prev,
+        ]);
+      }
 
       setPhotoMessage("");
-      alert("¡Fotografía compartida con éxito en el álbum del evento!");
-    } catch (err) {
-      console.warn("Upload fallback local:", err);
-      // Fallback preview
-      setPhotos((prev) => [
-        {
-          url: URL.createObjectURL(file),
-          author: photoAuthor || guest.familyName,
-          message: photoMessage,
-        },
-        ...prev,
-      ]);
-      setPhotoMessage("");
+      showToast("success", "¡Recuerdo guardado en el álbum en vivo! ✨", 100, 5000);
+    } catch (err: any) {
+      console.error("[handlePhotoUpload] Error:", err);
+      showToast("error", err?.message || "No se pudo subir la foto. Intenta de nuevo.", undefined, 5000);
     } finally {
       setIsUploadingPhoto(false);
     }
@@ -1742,6 +1826,64 @@ export function InvitationExperience({
                   </p>
                 )}
               </div>
+            </div>
+          </div>,
+          document.body
+        )}
+
+        {/* ---------------- TOAST EDITORIAL FLOTANTE PARA SUBIDA DE FOTOGRAFÍAS ---------------- */}
+        {isMounted && toast.visible && createPortal(
+          <div
+            role="status"
+            aria-live="polite"
+            className="fixed bottom-6 left-1/2 -translate-x-1/2 z-[110] w-[90%] max-w-md pointer-events-auto animate-in fade-in slide-in-from-bottom-5 duration-300"
+          >
+            <div className="bg-[#181715]/95 text-[#F7F4EE] border border-[#DFC38C]/40 backdrop-blur-xl rounded-2xl p-4 shadow-[0_20px_50px_rgba(0,0,0,0.5)] flex flex-col gap-2.5">
+              <div className="flex items-center gap-3">
+                {toast.type === "uploading" ? (
+                  <div className="w-8 h-8 rounded-full bg-[#DFC07D]/15 border border-[#DFC07D]/30 flex items-center justify-center shrink-0">
+                    <Loader2 className="w-4 h-4 animate-spin text-[#DFC07D]" />
+                  </div>
+                ) : toast.type === "success" ? (
+                  <div className="w-8 h-8 rounded-full bg-emerald-500/20 border border-emerald-500/40 flex items-center justify-center shrink-0">
+                    <Sparkles className="w-4 h-4 text-[#DFC07D]" />
+                  </div>
+                ) : (
+                  <div className="w-8 h-8 rounded-full bg-rose-500/20 border border-rose-500/40 flex items-center justify-center shrink-0">
+                    <XCircle className="w-4 h-4 text-rose-400" />
+                  </div>
+                )}
+
+                <div className="flex-1 min-w-0">
+                  <p className="font-serif italic text-sm text-[#F7F4EE] font-medium leading-snug">
+                    {toast.message}
+                  </p>
+                  {toast.type === "uploading" && (
+                    <span className="text-[10px] text-zinc-400 font-mono tracking-wider block mt-0.5">
+                      OPTIMIZANDO Y SUBIENDO A S3...
+                    </span>
+                  )}
+                </div>
+
+                {toast.type !== "uploading" && (
+                  <button
+                    onClick={() => setToast((prev) => ({ ...prev, visible: false }))}
+                    className="p-1 rounded-full text-zinc-400 hover:text-white transition-colors"
+                  >
+                    <X className="w-4 h-4" />
+                  </button>
+                )}
+              </div>
+
+              {/* Barra de progreso real/animada */}
+              {toast.type === "uploading" && (
+                <div className="w-full bg-white/10 rounded-full h-1.5 overflow-hidden">
+                  <div
+                    className="bg-gradient-to-r from-[#C5A059] to-[#DFC07D] h-full rounded-full transition-all duration-300"
+                    style={{ width: `${toast.progress || 30}%` }}
+                  />
+                </div>
+              )}
             </div>
           </div>,
           document.body

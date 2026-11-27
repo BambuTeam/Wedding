@@ -1391,6 +1391,7 @@ export class AureaRepository {
     eventId: string,
     photoData: {
       url: string;
+      s3Key?: string;
       author: string;
       message?: string;
       timestamp?: string;
@@ -1412,6 +1413,7 @@ export class AureaRepository {
       photoId,
       eventId,
       url: photoData.url,
+      s3Key: photoData.s3Key,
       author: photoData.author || "Invitado",
       message: photoData.message || "",
       timestamp,
@@ -1424,7 +1426,7 @@ export class AureaRepository {
           TableName: TABLE_NAME,
           Item: {
             PK: `EVENT#${eventId}`,
-            SK: `PHOTO#${timestamp}`,
+            SK: `PHOTO#${timestamp}#${photoId}`,
             ...newPhoto,
           },
         })
@@ -1443,6 +1445,7 @@ export class AureaRepository {
    * Obtiene las fotos de un evento ordenadas por fecha reciente
    */
   static async getPhotos(eventId: string): Promise<LivePhoto[]> {
+    let items: LivePhoto[] = [];
     try {
       const response = await docClient.send(
         new QueryCommand({
@@ -1456,12 +1459,36 @@ export class AureaRepository {
         })
       );
       if (response.Items && response.Items.length > 0) {
-        return response.Items as LivePhoto[];
+        items = response.Items as LivePhoto[];
       }
     } catch (err) {
       // Fallback
     }
-    return (memPhotos[eventId] || memPhotos["camila-andres-2025"] || []).slice().sort((a, b) => b.timestamp.localeCompare(a.timestamp));
+
+    if (items.length === 0) {
+      items = (memPhotos[eventId] || memPhotos["camila-andres-2025"] || []).slice().sort((a, b) => b.timestamp.localeCompare(a.timestamp));
+    }
+
+    // Si las fotos tienen s3Key pero no una URL fresca o bucket privado, refrescar con getSignedPhotoUrl
+    try {
+      const { getSignedPhotoUrl } = await import("../aws/s3");
+      const refreshed = await Promise.all(
+        items.map(async (p) => {
+          if (p.s3Key) {
+            try {
+              const freshUrl = await getSignedPhotoUrl(p.s3Key);
+              return { ...p, url: freshUrl };
+            } catch {
+              return p;
+            }
+          }
+          return p;
+        })
+      );
+      return refreshed;
+    } catch {
+      return items;
+    }
   }
 
   // ============================================================================

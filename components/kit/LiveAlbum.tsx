@@ -55,37 +55,22 @@ export function LiveAlbum({ event }: LiveAlbumProps) {
 
     setIsUploading(true);
     try {
-      const uploadUrlRes = await fetch(`/api/events/${event.eventId}/upload-url`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          filename: selectedFile?.name || "photo.jpg",
-          contentType: selectedFile?.type || "image/jpeg",
-        }),
-      });
+      if (selectedFile) {
+        const formData = new FormData();
+        formData.append("file", selectedFile);
+        formData.append("author", authorName || "Invitado en la fiesta");
+        if (message) formData.append("message", message);
 
-      const uploadUrlData = await uploadUrlRes.json();
-      let finalPhotoUrl = uploadUrlData.publicUrl;
-
-      if (!uploadUrlData.isDemoFallback && uploadUrlData.uploadUrl && selectedFile) {
-        await fetch(uploadUrlData.uploadUrl, {
-          method: "PUT",
-          headers: { "Content-Type": selectedFile.type },
-          body: selectedFile,
+        const res = await fetch(`/api/public/events/${event.eventId}/photos`, {
+          method: "POST",
+          body: formData,
         });
-      } else if (previewUrl) {
-        finalPhotoUrl = previewUrl;
-      }
 
-      await fetch(`/api/events/${event.eventId}/photos`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          url: finalPhotoUrl,
-          author: authorName || "Invitado en la fiesta",
-          message: message || "¡Celebrando con todo el amor a Camila & Andrés!",
-        }),
-      });
+        if (!res.ok) {
+          const errData = await res.json();
+          throw new Error(errData.error || "Error al subir la fotografía.");
+        }
+      }
 
       setSelectedFile(null);
       setPreviewUrl(null);

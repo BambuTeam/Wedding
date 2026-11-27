@@ -161,6 +161,7 @@ export interface LivePhoto {
   photoId: string;
   eventId: string;
   url: string;
+  s3Key?: string;
   author: string;
   message?: string;
   timestamp: string;

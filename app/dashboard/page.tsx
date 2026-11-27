@@ -561,6 +561,17 @@ export default function DashboardPage() {
           </button>
 
           <Link
+            href={`/modo-tv?eventId=${event.eventId}`}
+            target="_blank"
+            className="flex items-center gap-1.5 px-4 py-2 min-h-[44px] rounded-full bg-white border border-[#DFC9A6] text-zinc-800 hover:bg-[#FAF7F2] text-[13px] font-medium shadow-sm transition-all"
+            title="Abrir pantalla para proyector o TV de la fiesta en vivo"
+          >
+            <Tv className="w-3.5 h-3.5 text-[#C5A059]" />
+            <span className="hidden sm:inline">Pantalla Proyector TV</span>
+            <span className="sm:hidden">Modo TV</span>
+          </Link>
+
+          <Link
             href={`/invitacion/preview?eventId=${event.eventId}`}
             target="_blank"
             className="flex items-center gap-1.5 px-4 py-2 min-h-[44px] rounded-full bg-[#1E1C1A] text-white hover:bg-black text-[13px] font-medium shadow-sm transition-all"

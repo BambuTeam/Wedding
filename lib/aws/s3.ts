@@ -1,4 +1,4 @@
-import { S3Client, PutObjectCommand } from "@aws-sdk/client-s3";
+import { S3Client, PutObjectCommand, GetObjectCommand } from "@aws-sdk/client-s3";
 import { getSignedUrl } from "@aws-sdk/s3-request-presigner";
 
 const region = process.env.APP_AWS_REGION || process.env.AWS_REGION || "us-east-1";
@@ -18,7 +18,7 @@ if (accessKeyId && secretAccessKey) {
 
 export const s3Client = new S3Client(s3Config);
 
-export const BUCKET_NAME = process.env.S3_BUCKET_NAME || "aurea-eventos-media-gt";
+export const BUCKET_NAME = process.env.S3_BUCKET_NAME || process.env.AWS_S3_BUCKET || "aurea-eventos-media-gt";
 
 export interface PresignedUploadResult {
   uploadUrl: string;
@@ -27,8 +27,49 @@ export interface PresignedUploadResult {
 }
 
 /**
+ * Genera una URL firmada de lectura válida (GetObject) para visualizar imágenes desde un bucket privado de S3.
+ * Duración por defecto: 7 días (604,800 segundos, máximo permitido por SigV4).
+ */
+export async function getSignedPhotoUrl(fileKey: string, expiresInSeconds: number = 604800): Promise<string> {
+  try {
+    const command = new GetObjectCommand({
+      Bucket: BUCKET_NAME,
+      Key: fileKey,
+    });
+    return await getSignedUrl(s3Client, command, { expiresIn: expiresInSeconds });
+  } catch (error) {
+    console.error("[getSignedPhotoUrl] Error generating signed URL for key:", fileKey, error);
+    return `https://${BUCKET_NAME}.s3.${region}.amazonaws.com/${fileKey}`;
+  }
+}
+
+/**
+ * Sube un buffer de imagen directamente a S3 en el servidor (evita CORS y fallos en móviles).
+ */
+export async function uploadBufferToS3(
+  buffer: Buffer,
+  fileKey: string,
+  contentType: string = "image/jpeg"
+): Promise<{ s3Key: string; readUrl: string }> {
+  const command = new PutObjectCommand({
+    Bucket: BUCKET_NAME,
+    Key: fileKey,
+    Body: buffer,
+    ContentType: contentType,
+  });
+
+  await s3Client.send(command);
+  const readUrl = await getSignedPhotoUrl(fileKey);
+
+  return {
+    s3Key: fileKey,
+    readUrl,
+  };
+}
+
+/**
  * Genera una URL firmada de S3 (PUT) para la subida directa de fotos desde el navegador o móvil.
- * La ruta es `events/${eventId}/photos/${Date.now()}-${fileName}`, compatible con la Bucket Policy pública de lectura.
+ * La ruta es `events/${eventId}/photos/${Date.now()}-${fileName}`.
  */
 export async function createPresignedUploadUrl(
   eventId: string,
@@ -53,11 +94,8 @@ export async function createPresignedUploadUrl(
   // URL firmada válida por 1 hora (3600 segundos)
   const uploadUrl = await getSignedUrl(s3Client, command, { expiresIn: 3600 });
 
-  // URL pública para visualización
-  const publicDomain = process.env.S3_PUBLIC_DOMAIN;
-  const publicUrl = publicDomain
-    ? `https://${publicDomain}/${fileKey}`
-    : `https://${BUCKET_NAME}.s3.${region}.amazonaws.com/${fileKey}`;
+  // URL de lectura firmada
+  const publicUrl = await getSignedPhotoUrl(fileKey);
 
   return {
     uploadUrl,
