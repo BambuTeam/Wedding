@@ -127,7 +127,37 @@ export class AureaRepository {
       );
 
       if (existing.Item) {
-        return; // Ya existe en la base de datos
+        // Verificar si los tenants esenciales ya existen en la tabla
+        try {
+          const corp = await docClient.send(
+            new GetCommand({
+              TableName: TABLE_NAME,
+              Key: {
+                PK: "TENANT#tenant_pending_gala_corp",
+                SK: "PROFILE",
+              },
+            })
+          );
+          if (!corp.Item) {
+            for (const t of Object.values(MOCK_TENANTS)) {
+              await docClient.send(
+                new PutCommand({
+                  TableName: TABLE_NAME,
+                  Item: {
+                    PK: `TENANT#${t.tenantId}`,
+                    SK: "PROFILE",
+                    GSI1PK: `EMAIL#${t.email.toLowerCase()}`,
+                    GSI1SK: `TENANT#${t.tenantId}`,
+                    ...t,
+                  },
+                })
+              );
+            }
+          }
+        } catch {
+          // Fallback silencioso
+        }
+        return; // Evento demo ya existe
       }
 
       console.log(`[AureaRepository] Sembrando evento inicial '${demoEventId}' en ${TABLE_NAME}...`);
@@ -740,7 +770,25 @@ export class AureaRepository {
       (t) => (t.accountCode || "").toUpperCase() === cleanCode ||
       (t.tenantId === "tenant_pending_gala_corp" && (cleanCode === "AUR-6512" || cleanCode === "AUR-6518"))
     );
-    return found || null;
+    if (found) {
+      // Auto-sembrar en DynamoDB para garantizar que las consultas directas en BD funcionen
+      docClient
+        .send(
+          new PutCommand({
+            TableName: TABLE_NAME,
+            Item: {
+              PK: `TENANT#${found.tenantId}`,
+              SK: "PROFILE",
+              GSI1PK: `EMAIL#${found.email.toLowerCase()}`,
+              GSI1SK: `TENANT#${found.tenantId}`,
+              ...found,
+            },
+          })
+        )
+        .catch(() => {});
+      return found;
+    }
+    return null;
   }
 
   /**
@@ -903,9 +951,11 @@ export class AureaRepository {
   }
 
   /**
-   * Obtiene la metadata de un evento por eventId
+   * Obtiene la metadata de un evento por eventId, refrescando dinámicamente las presigned URLs
+   * de sus fotos editoriales si provienen de S3 privado.
    */
   static async getEventMeta(eventId: string): Promise<EventMeta | null> {
+    let item: EventMeta | null = null;
     try {
       const response = await docClient.send(
         new GetCommand({
@@ -917,12 +967,44 @@ export class AureaRepository {
         })
       );
       if (response.Item) {
-        return response.Item as EventMeta;
+        item = response.Item as EventMeta;
       }
     } catch (err) {
       // Fallback
     }
-    return memEvents[eventId] || null;
+
+    if (!item) {
+      item = memEvents[eventId] || null;
+    }
+
+    if (item && Array.isArray(item.editorialPhotos) && item.editorialPhotos.length > 0) {
+      try {
+        const { getSignedPhotoUrl } = await import("../aws/s3");
+        const refreshedPhotos = await Promise.all(
+          item.editorialPhotos.map(async (photo) => {
+            // Si la foto tiene s3Key o una URL que apunta al bucket de S3
+            let s3Key = photo.s3Key;
+            if (!s3Key && photo.url && photo.url.includes("amazonaws.com/events/")) {
+              s3Key = photo.url.split("amazonaws.com/")[1];
+            }
+            if (s3Key) {
+              try {
+                const signed = await getSignedPhotoUrl(s3Key, 3600);
+                return { ...photo, url: signed, s3Key };
+              } catch {
+                return photo;
+              }
+            }
+            return photo;
+          })
+        );
+        return { ...item, editorialPhotos: refreshedPhotos };
+      } catch {
+        return item;
+      }
+    }
+
+    return item;
   }
 
   /**
@@ -1561,15 +1643,19 @@ export class AureaRepository {
       items = (memPhotos[eventId] || memPhotos["camila-andres-2025"] || []).slice().sort((a, b) => b.timestamp.localeCompare(a.timestamp));
     }
 
-    // Si las fotos tienen s3Key pero no una URL fresca o bucket privado, refrescar con getSignedPhotoUrl
+    // Si las fotos tienen s3Key o provienen de S3, refrescar con getSignedPhotoUrl
     try {
       const { getSignedPhotoUrl } = await import("../aws/s3");
       const refreshed = await Promise.all(
         items.map(async (p) => {
-          if (p.s3Key) {
+          let s3Key = p.s3Key;
+          if (!s3Key && p.url && p.url.includes("amazonaws.com/events/")) {
+            s3Key = p.url.split("amazonaws.com/")[1];
+          }
+          if (s3Key) {
             try {
-              const freshUrl = await getSignedPhotoUrl(p.s3Key);
-              return { ...p, url: freshUrl };
+              const freshUrl = await getSignedPhotoUrl(s3Key, 3600);
+              return { ...p, url: freshUrl, s3Key };
             } catch {
               return p;
             }

@@ -2,22 +2,42 @@ import { DynamoDBClient } from "@aws-sdk/client-dynamodb";
 import { DynamoDBDocumentClient } from "@aws-sdk/lib-dynamodb";
 import { getAwsConfig } from "./clients";
 
-const { region, credentials } = getAwsConfig();
+export function getFreshDynamoDocClient(): DynamoDBDocumentClient {
+  const { region, credentials } = getAwsConfig();
+  const rawClient = new DynamoDBClient({
+    region,
+    ...(credentials ? { credentials } : {}),
+  });
 
-const clientConfig: { region: string; credentials?: { accessKeyId: string; secretAccessKey: string } } = {
-  region,
-};
-
-if (credentials) {
-  clientConfig.credentials = credentials;
+  return DynamoDBDocumentClient.from(rawClient, {
+    marshallOptions: {
+      removeUndefinedValues: true,
+      convertClassInstanceToMap: true,
+    },
+  });
 }
 
-export const dynamoClient = new DynamoDBClient(clientConfig);
+export function getFreshDynamoClient(): DynamoDBClient {
+  const { region, credentials } = getAwsConfig();
+  return new DynamoDBClient({
+    region,
+    ...(credentials ? { credentials } : {}),
+  });
+}
 
-export const docClient = DynamoDBDocumentClient.from(dynamoClient, {
-  marshallOptions: {
-    removeUndefinedValues: true,
-    convertClassInstanceToMap: true,
+export const dynamoClient = new Proxy({} as DynamoDBClient, {
+  get(_, prop) {
+    const target = getFreshDynamoClient() as any;
+    const val = target[prop];
+    return typeof val === "function" ? val.bind(target) : val;
+  },
+});
+
+export const docClient = new Proxy({} as DynamoDBDocumentClient, {
+  get(_, prop) {
+    const target = getFreshDynamoDocClient() as any;
+    const val = target[prop];
+    return typeof val === "function" ? val.bind(target) : val;
   },
 });
 

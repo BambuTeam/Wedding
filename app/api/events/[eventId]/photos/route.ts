@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { AureaRepository } from "@/lib/db/aureaRepository";
 import { uploadBufferToS3 } from "@/lib/aws/s3";
+import { moderateImageBuffer } from "@/lib/aws/rekognition";
 
 export const dynamic = "force-dynamic";
 
@@ -56,6 +57,20 @@ export async function POST(
       // Buffer de la imagen
       const arrayBuffer = await file.arrayBuffer();
       const buffer = Buffer.from(arrayBuffer);
+
+      // -------------------------------------------------------------
+      // MODERACIÓN AUTOMÁTICA ANTI-CONTENIDO OBSCENO (AWS REKOGNITION)
+      // -------------------------------------------------------------
+      const moderation = await moderateImageBuffer(buffer);
+      if (!moderation.isSafe) {
+        return NextResponse.json(
+          {
+            error: "Esta fotografía no cumple con las normas de convivencia del evento y fue bloqueada automáticamente.",
+            blockedReason: moderation.blockedReason,
+          },
+          { status: 422 }
+        );
+      }
 
       // Sanitizar nombre de archivo
       const cleanName = (file.name || "foto.jpg")

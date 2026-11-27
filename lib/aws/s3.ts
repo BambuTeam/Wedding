@@ -2,17 +2,26 @@ import { S3Client, PutObjectCommand, GetObjectCommand } from "@aws-sdk/client-s3
 import { getSignedUrl } from "@aws-sdk/s3-request-presigner";
 import { getAwsConfig } from "./clients";
 
-const { region, credentials } = getAwsConfig();
-
-const s3Config: { region: string; credentials?: { accessKeyId: string; secretAccessKey: string } } = {
-  region,
-};
-
-if (credentials) {
-  s3Config.credentials = credentials;
+/**
+ * Retorna una instancia fresca de S3Client configurada con las credenciales activas
+ * compatibles con AWS Amplify SSR, Vercel y Local Dev.
+ */
+export function getFreshS3Client(): S3Client {
+  const { region, credentials } = getAwsConfig();
+  return new S3Client({
+    region,
+    ...(credentials ? { credentials } : {}),
+  });
 }
 
-export const s3Client = new S3Client(s3Config);
+// Proxy transparente para que cualquier exportacion existente de s3Client resuelva credenciales dinámicamente
+export const s3Client = new Proxy({} as S3Client, {
+  get(_, prop) {
+    const target = getFreshS3Client() as any;
+    const val = target[prop];
+    return typeof val === "function" ? val.bind(target) : val;
+  },
+});
 
 export const BUCKET_NAME =
   process.env.AUREA_S3_BUCKET ||
@@ -39,6 +48,7 @@ export async function getSignedPhotoUrl(fileKey: string, expiresInSeconds: numbe
     return await getSignedUrl(s3Client, command, { expiresIn: expiresInSeconds });
   } catch (error) {
     console.error("[getSignedPhotoUrl] Error generating signed URL for key:", fileKey, error);
+    const { region } = getAwsConfig();
     return `https://${BUCKET_NAME}.s3.${region}.amazonaws.com/${fileKey}`;
   }
 }

@@ -79,7 +79,7 @@ export default function DashboardPage() {
 
       if (typeof window !== "undefined") {
         const queryParams = new URLSearchParams(window.location.search);
-        if (!targetTenant) targetTenant = queryParams.get("account") || queryParams.get("tenant") || queryParams.get("tenantId") || undefined;
+        if (!targetTenant) targetTenant = queryParams.get("account") || queryParams.get("accountCode") || queryParams.get("code") || queryParams.get("tenant") || queryParams.get("tenantId") || undefined;
         if (!targetPin) targetPin = queryParams.get("pin") || undefined;
         if (!targetEventId) targetEventId = queryParams.get("eventId") || undefined;
 
@@ -89,7 +89,11 @@ export default function DashboardPage() {
       }
 
       const urlParams = new URLSearchParams();
-      if (targetTenant) urlParams.set("tenant", targetTenant);
+      if (targetTenant) {
+        urlParams.set("tenant", targetTenant);
+        urlParams.set("account", targetTenant);
+        urlParams.set("accountCode", targetTenant);
+      }
       if (targetPin) urlParams.set("pin", targetPin);
       if (targetEventId) urlParams.set("eventId", targetEventId);
 

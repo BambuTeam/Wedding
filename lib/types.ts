@@ -58,6 +58,7 @@ export interface EventMusicConfig {
 export interface EditorialPhoto {
   id: string;
   url: string;
+  s3Key?: string;
   caption?: string;
   order?: number;
   isCover?: boolean;

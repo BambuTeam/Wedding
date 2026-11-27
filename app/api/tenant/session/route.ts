@@ -9,6 +9,8 @@ export async function GET(request: NextRequest) {
     const { searchParams } = new URL(request.url);
     const tenantIdParam =
       searchParams.get("account") ||
+      searchParams.get("accountCode") ||
+      searchParams.get("code") ||
       searchParams.get("tenant") ||
       searchParams.get("tenantId") ||
       searchParams.get("email");
@@ -149,6 +151,9 @@ export async function GET(request: NextRequest) {
     }
     if (!currentEvent && tenant.primaryEventId) {
       currentEvent = await AureaRepository.getEventMeta(tenant.primaryEventId);
+    }
+    if (!currentEvent) {
+      currentEvent = (await AureaRepository.getEventMeta("cumbre-ibero-2026")) || (await AureaRepository.getEventMeta("camila-andres-2025"));
     }
 
     return NextResponse.json({

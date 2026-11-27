@@ -154,9 +154,9 @@ function ModoTvContent() {
 
   const activeMedia = mediaItems[currentIdx] || null;
 
-  // URL exacta apuntando a la invitación pública con scroll al álbum
+  // URL exacta apuntando al portal express móvil de cámara directa
   const albumQrUrl = typeof window !== "undefined"
-    ? `${window.location.origin}/invitacion/preview?eventId=${eventId}#album`
+    ? `${window.location.origin}/subir/${(eventMeta as any)?.slug || eventId}`
     : "";
 
   return (

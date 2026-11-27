@@ -687,6 +687,7 @@ export const MOCK_TENANTS: Record<string, Tenant> = {
     currency: "GTQ",
     paymentStatus: "PAID",
     accessPin: "282911",
+    primaryEventId: "cumbre-ibero-2026",
     createdAt: "2026-11-20T11:30:00Z",
     updatedAt: "2026-11-20T11:30:00Z",
     notes: "Gala de fin de año 350 personas con kit del día y modo TV.",
