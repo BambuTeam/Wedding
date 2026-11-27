@@ -79,12 +79,12 @@ export default function DashboardPage() {
 
       if (typeof window !== "undefined") {
         const queryParams = new URLSearchParams(window.location.search);
-        if (!targetTenant) targetTenant = queryParams.get("tenant") || queryParams.get("tenantId") || undefined;
+        if (!targetTenant) targetTenant = queryParams.get("account") || queryParams.get("tenant") || queryParams.get("tenantId") || undefined;
         if (!targetPin) targetPin = queryParams.get("pin") || undefined;
         if (!targetEventId) targetEventId = queryParams.get("eventId") || undefined;
 
         // Fallback a localStorage si no vienen en la URL
-        if (!targetTenant) targetTenant = localStorage.getItem("aurea_tenant_id") || undefined;
+        if (!targetTenant) targetTenant = localStorage.getItem("aurea_tenant_account") || localStorage.getItem("aurea_tenant_id") || undefined;
         if (!targetPin) targetPin = localStorage.getItem("aurea_access_pin") || undefined;
       }
 
@@ -117,7 +117,11 @@ export default function DashboardPage() {
 
       // Sesión Válida: Persistir credenciales para recargas futuras
       if (typeof window !== "undefined") {
-        if (targetTenant) localStorage.setItem("aurea_tenant_id", targetTenant);
+        const storedCode = data.tenant?.accountCode || targetTenant;
+        if (storedCode) {
+          localStorage.setItem("aurea_tenant_account", storedCode);
+          localStorage.setItem("aurea_tenant_id", data.tenant?.tenantId || storedCode);
+        }
         if (targetPin) localStorage.setItem("aurea_access_pin", targetPin);
       }
 
@@ -165,6 +169,7 @@ export default function DashboardPage() {
   // Cerrar sesión de anfitrión
   const handleLogout = () => {
     if (typeof window !== "undefined") {
+      localStorage.removeItem("aurea_tenant_account");
       localStorage.removeItem("aurea_tenant_id");
       localStorage.removeItem("aurea_access_pin");
       window.location.href = "/dashboard";
@@ -184,12 +189,34 @@ export default function DashboardPage() {
     let foundGuests: Guest[] = [];
     let foundTables: Table[] = [];
 
+    // Preparar headers con credenciales de anfitrión para garantizar aislamiento multi-tenant
+    const authHeaders: Record<string, string> = {};
+    const tenantIdOrCode =
+      sessionData?.tenant?.accountCode ||
+      sessionData?.tenant?.tenantId ||
+      (typeof window !== "undefined" ? localStorage.getItem("aurea_tenant_account") || localStorage.getItem("aurea_tenant_id") : null);
+    const accessPin =
+      sessionData?.tenant?.accessPin ||
+      (typeof window !== "undefined" ? localStorage.getItem("aurea_access_pin") : null);
+
+    if (tenantIdOrCode) authHeaders["x-tenant-id"] = tenantIdOrCode;
+    if (accessPin) authHeaders["x-tenant-pin"] = accessPin;
+
     try {
       const [eventRes, guestsRes, tablesRes] = await Promise.all([
-        fetch(`/api/events/${selectedEventId}`),
-        fetch(`/api/events/${selectedEventId}/guests`),
-        fetch(`/api/events/${selectedEventId}/tables`),
+        fetch(`/api/events/${selectedEventId}`, { headers: authHeaders }),
+        fetch(`/api/events/${selectedEventId}/guests`, { headers: authHeaders }),
+        fetch(`/api/events/${selectedEventId}/tables`, { headers: authHeaders }),
       ]);
+
+      if (eventRes.status === 403) {
+        const errorData = await eventRes.json();
+        if (errorData?.allowedEventId && errorData.allowedEventId !== selectedEventId) {
+          console.warn("[loadDashboardData] Intento de acceso cruzado detectado. Redirigiendo a evento propio:", errorData.allowedEventId);
+          setSelectedEventId(errorData.allowedEventId);
+          return;
+        }
+      }
 
       if (eventRes.ok) {
         const eventData = await eventRes.json();
@@ -391,14 +418,14 @@ export default function DashboardPage() {
           <form onSubmit={handleManualPinSubmit} className="space-y-4">
             <div>
               <label className="block text-xs font-semibold text-zinc-700 uppercase tracking-wider mb-1.5">
-                Identificador de Cuenta / Anfitrión
+                CORREO ELECTRÓNICO O CÓDIGO DE CUENTA
               </label>
               <input
                 type="text"
                 required
                 value={inputTenantId}
                 onChange={(e) => setInputTenantId(e.target.value)}
-                placeholder="Ej. tenant_pending_lucia o tu correo"
+                placeholder="Ej. lucia@gmail.com o AUR-4829"
                 className="w-full px-4 py-2.5 rounded-xl border border-zinc-200 bg-zinc-50 text-sm font-medium text-zinc-900 focus:outline-none focus:ring-2 focus:ring-zinc-900 focus:bg-white transition-all"
               />
             </div>
@@ -436,7 +463,9 @@ export default function DashboardPage() {
 
           <div className="pt-2 border-t border-zinc-100 text-center">
             <a
-              href="https://wa.me/50255551234?text=Hola%20Áurea,%20olvidé%20el%20PIN%20de%20acceso%20a%20mi%20celebración"
+              href={`https://wa.me/50255551234?text=${encodeURIComponent(
+                `Hola equipo Áurea, necesito restablecer el PIN de acceso para mi cuenta: ${inputTenantId.trim() || "[mi correo o código]"}`
+              )}`}
               target="_blank"
               rel="noopener noreferrer"
               className="text-[11px] text-zinc-500 hover:text-zinc-800 font-medium underline"
@@ -453,7 +482,7 @@ export default function DashboardPage() {
   // 4. SESIÓN AUTENTICADA: RENDERIZADO DEL DASHBOARD AISLADO
   // ============================================================================
   const isCoupleHost = sessionData.tenant?.role === "COUPLE" || sessionData.tenant?.role === "HOST";
-  const canSwitchEvents = sessionData.isRootAdmin || sessionData.tenant?.role === "PLANNER";
+  const canSwitchEvents = !isCoupleHost && (sessionData.isRootAdmin || sessionData.tenant?.role === "PLANNER");
 
   if (loadingData || !event || !stats) {
     return (

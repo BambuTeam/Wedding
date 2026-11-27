@@ -19,6 +19,7 @@ import {
 } from "lucide-react";
 import { EventMusicConfig, MusicProvider, AureaAmbientPreset } from "@/lib/types";
 import { parseMusicUrl, AUREA_AMBIENT_PRESETS, MusicTrackMetadata } from "@/lib/musicUtils";
+import { getClientTenantHeaders } from "@/lib/auth/clientAuth";
 
 interface MusicConfigModalProps {
   isOpen: boolean;
@@ -338,7 +339,10 @@ export function MusicConfigModal({
     try {
       const res = await fetch(`/api/events/${eventId}`, {
         method: "PATCH",
-        headers: { "Content-Type": "application/json" },
+        headers: {
+          "Content-Type": "application/json",
+          ...getClientTenantHeaders(),
+        },
         body: JSON.stringify({ musicConfig: configToSave }),
       });
 

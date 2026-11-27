@@ -49,6 +49,7 @@ import {
   resolveEventCategory,
   getEventCuratedSculptures,
 } from "@/lib/3d/aurea3dCurator";
+import { getClientTenantHeaders } from "@/lib/auth/clientAuth";
 
 interface InvitationCustomizerProps {
   event: EventMeta;
@@ -373,7 +374,10 @@ export function InvitationCustomizer({ event, onSaved }: InvitationCustomizerPro
         try {
           const res = await fetch(`/api/events/${event.eventId}/upload-url`, {
             method: "POST",
-            headers: { "Content-Type": "application/json" },
+            headers: {
+              "Content-Type": "application/json",
+              ...getClientTenantHeaders(),
+            },
             body: JSON.stringify({
               filename: file.name,
               contentType: file.type || "image/jpeg",
@@ -494,7 +498,10 @@ export function InvitationCustomizer({ event, onSaved }: InvitationCustomizerPro
     try {
       const res = await fetch(`/api/events/${event.eventId}`, {
         method: "PATCH",
-        headers: { "Content-Type": "application/json" },
+        headers: {
+          "Content-Type": "application/json",
+          ...getClientTenantHeaders(),
+        },
         body: JSON.stringify(payload),
       });
 

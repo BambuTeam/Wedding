@@ -7,15 +7,19 @@ export const dynamic = "force-dynamic";
 export async function GET(request: NextRequest) {
   try {
     const { searchParams } = new URL(request.url);
-    const tenantIdParam = searchParams.get("tenant") || searchParams.get("tenantId");
-    const pinParam = searchParams.get("pin") || request.headers.get("x-access-pin");
+    const tenantIdParam =
+      searchParams.get("account") ||
+      searchParams.get("tenant") ||
+      searchParams.get("tenantId") ||
+      searchParams.get("email");
+    const pinParam = searchParams.get("pin") || request.headers.get("x-access-pin") || request.headers.get("x-tenant-pin");
     const requestedEventId = searchParams.get("eventId");
 
     // Verificar si quien consulta tiene sesión activa de Root SuperAdmin
     const rootCookie = request.cookies.get(ROOT_COOKIE_NAME)?.value;
     const isRootAdmin = Boolean(rootCookie ? await verifyRootJwt(rootCookie) : null);
 
-    // Caso 1: Si no se especifica tenant
+    // Caso 1: Si no se especifica tenant ni cuenta
     if (!tenantIdParam) {
       if (isRootAdmin) {
         // El SuperAdmin puede ver todos los eventos en modo supervisor
@@ -26,6 +30,7 @@ export async function GET(request: NextRequest) {
           isRootAdmin: true,
           tenant: {
             tenantId: "root_superadmin",
+            accountCode: "SUPERADMIN",
             name: "SuperAdmin Áurea",
             role: "PLANNER",
             status: "ACTIVE",
@@ -45,8 +50,8 @@ export async function GET(request: NextRequest) {
       );
     }
 
-    // Caso 2: Buscar el Tenant en DynamoDB (PK: TENANT#<id>, SK: PROFILE)
-    const tenant = await AureaRepository.getTenant(tenantIdParam.trim());
+    // Caso 2: Buscar el Tenant en DynamoDB por Código de Cuenta (AUR-XXXX), Correo o tenantId
+    const tenant = await AureaRepository.resolveTenantIdentifier(tenantIdParam.trim());
 
     if (!tenant) {
       return NextResponse.json(
@@ -101,24 +106,30 @@ export async function GET(request: NextRequest) {
       );
     }
 
-    // Caso 4: Validar PIN de acceso (Si no es Root Admin)
+    // Caso 4: Validar PIN de acceso
     const storedPin = tenant.accessPin?.trim();
     const providedPin = pinParam?.trim();
 
-    if (!isRootAdmin) {
-      if (!providedPin || providedPin !== storedPin) {
-        return NextResponse.json(
-          {
-            valid: false,
-            reason: "INVALID_PIN",
-            tenantId: tenant.tenantId,
-            tenantName: tenant.name,
-            message: "El PIN de 6 dígitos ingresado es incorrecto o no fue proporcionado.",
-          },
-          { status: 401 }
-        );
-      }
+    // Cuando se consulta un tenant específico con PIN, operamos en modo Anfitrión
+    const hasValidHostPin = Boolean(providedPin && providedPin === storedPin);
+
+    if (!hasValidHostPin && !isRootAdmin) {
+      return NextResponse.json(
+        {
+          valid: false,
+          reason: "INVALID_PIN",
+          tenantId: tenant.tenantId,
+          accountCode: tenant.accountCode,
+          tenantName: tenant.name,
+          message: "El PIN de 6 dígitos ingresado es incorrecto o no fue proporcionado.",
+        },
+        { status: 401 }
+      );
     }
+
+    // Si se autenticó mediante credenciales de anfitrión, forzar isRootAdmin: false
+    // para que el dashboard opere en estricto aislamiento de anfitrión sin permitir acceso cruzado
+    const effectiveIsRootAdmin = isRootAdmin && !hasValidHostPin;
 
     // Caso 5: Autenticación exitosa -> Cargar EXCLUSIVAMENTE los eventos de ESTE tenant
     const tenantEvents = await AureaRepository.getTenantEvents(tenant.tenantId);
@@ -137,9 +148,10 @@ export async function GET(request: NextRequest) {
 
     return NextResponse.json({
       valid: true,
-      isRootAdmin,
+      isRootAdmin: effectiveIsRootAdmin,
       tenant: {
         tenantId: tenant.tenantId,
+        accountCode: tenant.accountCode || `AUR-${tenant.tenantId.slice(-4)}`,
         name: tenant.name,
         email: tenant.email,
         phone: tenant.phone,

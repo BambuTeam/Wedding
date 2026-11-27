@@ -12,7 +12,8 @@ import {
   MessageCircle,
   MoreVertical,
   Building2,
-  Key
+  Key,
+  RotateCcw
 } from 'lucide-react';
 
 interface TenantsDirectoryProps {
@@ -39,6 +40,7 @@ export function TenantsDirectory({
       tenant.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
       tenant.email.toLowerCase().includes(searchTerm.toLowerCase()) ||
       tenant.phone.includes(searchTerm) ||
+      (tenant.accountCode || '').toLowerCase().includes(searchTerm.toLowerCase()) ||
       tenant.tenantId.toLowerCase().includes(searchTerm.toLowerCase());
 
     const matchesRole = roleFilter === 'ALL' || tenant.role === roleFilter;
@@ -52,6 +54,35 @@ export function TenantsDirectory({
     setLoadingId(tenant.tenantId);
     try {
       await onToggleStatus(tenant.tenantId, tenant.status);
+    } finally {
+      setLoadingId(null);
+    }
+  };
+
+  const handleResetPin = async (tenant: Tenant) => {
+    setActionMenuOpen(null);
+    const confirmed = window.confirm(
+      `¿Deseas restablecer el PIN de acceso para "${tenant.name}"? El PIN actual quedará invalidado inmediatamente y se generará uno nuevo de 6 dígitos.`
+    );
+    if (!confirmed) return;
+
+    setLoadingId(tenant.tenantId);
+    try {
+      const res = await fetch("/api/root/tenants", {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ tenantId: tenant.tenantId, action: "RESET_PIN" }),
+      });
+      const data = await res.json();
+      if (!res.ok) {
+        throw new Error(data.error || "No se pudo restablecer el PIN");
+      }
+      onRefresh();
+      if (data.tenant) {
+        onShowCredentials(data.tenant);
+      }
+    } catch (err: any) {
+      alert(err.message || "Error al restablecer PIN");
     } finally {
       setLoadingId(null);
     }
@@ -187,6 +218,11 @@ export function TenantsDirectory({
                           <div>
                             <div className="font-semibold text-zinc-900 group-hover:text-zinc-950 flex items-center gap-2">
                               {tenant.name}
+                              {tenant.accountCode && (
+                                <span className="text-[10px] font-mono font-bold tracking-wider px-2 py-0.5 rounded-full bg-amber-50 text-[#8A6D1C] border border-amber-200">
+                                  {tenant.accountCode}
+                                </span>
+                              )}
                               {tenant.role === 'PLANNER' && (
                                 <span className="text-[10px] uppercase font-bold tracking-wider px-1.5 py-0.5 rounded bg-purple-100 text-purple-700">
                                   Agencia
@@ -194,7 +230,7 @@ export function TenantsDirectory({
                               )}
                             </div>
                             <div className="text-xs font-mono text-zinc-400">
-                              {tenant.tenantId}
+                              {tenant.accountCode ? `Cuenta: ${tenant.accountCode}` : tenant.tenantId}
                             </div>
                           </div>
                         </div>
@@ -263,13 +299,23 @@ export function TenantsDirectory({
                         <div className="relative inline-block text-left">
                           <div className="flex items-center justify-end gap-1">
                             {tenant.accessPin && (
-                              <button
-                                onClick={() => onShowCredentials(tenant)}
-                                title="Ver y Compartir Credenciales"
-                                className="min-h-[44px] min-w-[44px] flex items-center justify-center text-zinc-500 hover:text-zinc-900 hover:bg-zinc-100 rounded-lg transition-colors"
-                              >
-                                <Key className="w-4 h-4" />
-                              </button>
+                              <>
+                                <button
+                                  onClick={() => onShowCredentials(tenant)}
+                                  title="Ver y Compartir Credenciales"
+                                  className="min-h-[44px] min-w-[44px] flex items-center justify-center text-zinc-500 hover:text-zinc-900 hover:bg-zinc-100 rounded-lg transition-colors"
+                                >
+                                  <Key className="w-4 h-4" />
+                                </button>
+                                <button
+                                  onClick={() => handleResetPin(tenant)}
+                                  title="Resetear PIN de Acceso"
+                                  disabled={isLoading}
+                                  className="min-h-[44px] min-w-[44px] flex items-center justify-center text-zinc-400 hover:text-amber-700 hover:bg-amber-50 rounded-lg transition-colors"
+                                >
+                                  <RotateCcw className={`w-4 h-4 ${isLoading ? 'animate-spin text-amber-600' : ''}`} />
+                                </button>
+                              </>
                             )}
 
                             <button
@@ -289,16 +335,27 @@ export function TenantsDirectory({
                               />
                               <div className="absolute right-0 mt-1 w-52 bg-white rounded-xl shadow-xl border border-zinc-200 py-1.5 z-30 text-xs">
                                 {tenant.accessPin && (
-                                  <button
-                                    onClick={() => {
-                                      setActionMenuOpen(null);
-                                      onShowCredentials(tenant);
-                                    }}
-                                    className="w-full text-left px-3 py-2.5 min-h-[44px] text-zinc-700 hover:bg-zinc-50 flex items-center gap-2"
-                                  >
-                                    <Key className="w-4 h-4 text-zinc-400" />
-                                    <span>Credenciales & Enlace</span>
-                                  </button>
+                                  <>
+                                    <button
+                                      onClick={() => {
+                                        setActionMenuOpen(null);
+                                        onShowCredentials(tenant);
+                                      }}
+                                      className="w-full text-left px-3 py-2.5 min-h-[44px] text-zinc-700 hover:bg-zinc-50 flex items-center gap-2"
+                                    >
+                                      <Key className="w-4 h-4 text-zinc-400" />
+                                      <span>Credenciales & Enlace</span>
+                                    </button>
+
+                                    <button
+                                      onClick={() => handleResetPin(tenant)}
+                                      disabled={isLoading}
+                                      className="w-full text-left px-3 py-2.5 min-h-[44px] text-zinc-700 hover:bg-amber-50 hover:text-amber-800 flex items-center gap-2"
+                                    >
+                                      <RotateCcw className="w-4 h-4 text-amber-600" />
+                                      <span>Resetear PIN (6 dígitos)</span>
+                                    </button>
+                                  </>
                                 )}
 
                                 <a

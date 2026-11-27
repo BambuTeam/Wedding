@@ -10,6 +10,7 @@ import {
   LayoutGrid,
 } from "lucide-react";
 import { Table, Guest } from "@/lib/types";
+import { getClientTenantHeaders } from "@/lib/auth/clientAuth";
 
 interface SeatingChartProps {
   tables: Table[];
@@ -29,7 +30,10 @@ export function SeatingChart({ tables, guests, eventId, onRefresh }: SeatingChar
     try {
       await fetch(`/api/events/${eventId}/guests/${guestToken}`, {
         method: "PATCH",
-        headers: { "Content-Type": "application/json" },
+        headers: {
+          "Content-Type": "application/json",
+          ...getClientTenantHeaders(),
+        },
         body: JSON.stringify({
           action: "assign_table",
           tableId,

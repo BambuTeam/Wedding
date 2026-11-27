@@ -18,6 +18,7 @@ import {
 } from "lucide-react";
 import { Guest, EventMeta, Table } from "@/lib/types";
 import { buildWhatsAppInviteUrl, buildWhatsAppReminderUrl } from "@/lib/utils";
+import { getClientTenantHeaders } from "@/lib/auth/clientAuth";
 
 interface GuestsTableProps {
   guests: Guest[];
@@ -64,7 +65,10 @@ export function GuestsTable({ guests, event, tables, onRefresh }: GuestsTablePro
     try {
       const res = await fetch(`/api/events/${event.eventId}/guests`, {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
+        headers: {
+          "Content-Type": "application/json",
+          ...getClientTenantHeaders(),
+        },
         body: JSON.stringify({
           familyName: newFamilyName,
           primaryContactName: newContactName || newFamilyName,

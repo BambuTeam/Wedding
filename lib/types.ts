@@ -198,6 +198,7 @@ export type EventStatus = "ACTIVE" | "LIVE" | "DRAFT" | "SUSPENDED" | "ARCHIVED"
 
 export interface Tenant {
   tenantId: string;
+  accountCode?: string; // Formato oficial corto: AUR-XXXX (ej. AUR-4829)
   name: string;
   email: string;
   phone: string;

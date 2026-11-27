@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { EventsRepository } from "@/lib/db/repository";
+import { verifyEventAccess } from "@/lib/auth/tenantGuard";
 
 export const dynamic = "force-dynamic";
 
@@ -8,6 +9,11 @@ export async function GET(
   { params }: { params: { eventId: string } }
 ) {
   try {
+    const auth = await verifyEventAccess(request, params.eventId);
+    if (!auth.authorized) {
+      return auth.errorResponse!;
+    }
+
     const guests = await EventsRepository.getAllGuests(params.eventId);
     return NextResponse.json({ guests });
   } catch (error) {
@@ -21,6 +27,11 @@ export async function POST(
   { params }: { params: { eventId: string } }
 ) {
   try {
+    const auth = await verifyEventAccess(request, params.eventId);
+    if (!auth.authorized) {
+      return auth.errorResponse!;
+    }
+
     const body = await request.json();
     if (!body.familyName || !body.maxSeats) {
       return NextResponse.json(

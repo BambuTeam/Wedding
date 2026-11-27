@@ -51,6 +51,8 @@ export default function RootDashboardPage() {
     clientName: string;
     phone: string;
     celebrationType?: string;
+    accountCode?: string;
+    email?: string;
     accessUrl: string;
     accessPin: string;
     eventId?: string;
@@ -162,6 +164,8 @@ export default function RootDashboardPage() {
         clientName: data.tenant.name,
         phone: data.tenant.phone,
         celebrationType: data.tenant.celebrationType || 'Celebración',
+        accountCode: data.tenant.accountCode || data.accountCode,
+        email: data.tenant.email,
         accessUrl,
         accessPin: data.tenant.accessPin,
         eventId: data.eventId || data.tenant.primaryEventId,
@@ -192,13 +196,15 @@ export default function RootDashboardPage() {
       const data = await res.json();
 
       const origin = typeof window !== 'undefined' ? window.location.origin : 'https://aurea.lat';
-      const accessUrl = `${origin}${data.dashboardUrl}`;
+      const accessUrl = data.fullMagicUrl || `${origin}${data.magicUrl || `/dashboard?account=${data.tenant.accountCode || data.tenant.tenantId}&pin=${data.tenant.accessPin}`}`;
 
       setCreateModalOpen(false);
       setCredentialsData({
         clientName: data.tenant.name,
         phone: data.tenant.phone,
         celebrationType: data.tenant.celebrationType || formData.celebrationType || 'Celebración',
+        accountCode: data.tenant.accountCode || data.accountCode,
+        email: data.tenant.email,
         accessUrl,
         accessPin: data.tenant.accessPin,
         eventId: data.tenant.primaryEventId,
@@ -279,12 +285,15 @@ export default function RootDashboardPage() {
 
   const handleShowCredentials = (tenant: Tenant) => {
     const origin = typeof window !== 'undefined' ? window.location.origin : 'https://aurea.lat';
-    const accessUrl = `${origin}/dashboard?eventId=${tenant.primaryEventId || 'boda_camila_andres'}`;
+    const accountCode = tenant.accountCode || tenant.tenantId;
+    const accessUrl = `${origin}/dashboard?account=${accountCode}&pin=${tenant.accessPin}&eventId=${tenant.primaryEventId || ''}`;
 
     setCredentialsData({
       clientName: tenant.name,
       phone: tenant.phone,
       celebrationType: tenant.celebrationType,
+      accountCode: tenant.accountCode,
+      email: tenant.email,
       accessUrl,
       accessPin: tenant.accessPin || '982341',
       eventId: tenant.primaryEventId,

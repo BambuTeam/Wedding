@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { AureaRepository } from "@/lib/db/aureaRepository";
 import { createPresignedUploadUrl } from "@/lib/aws/s3";
+import { verifyEventAccess } from "@/lib/auth/tenantGuard";
 
 export const dynamic = "force-dynamic";
 
@@ -12,6 +13,20 @@ export async function POST(
     const { eventId } = params;
     const body = await request.json();
     const { filename = "photo.jpg", contentType = "image/jpeg", author = "Invitado", message = "" } = body;
+
+    // Validación de aislamiento multi-tenant si la subida proviene del anfitrión o contiene headers de sesión
+    const hasTenantAuth =
+      request.headers.has("x-tenant-id") ||
+      request.headers.has("x-account-code") ||
+      request.headers.has("x-tenant-pin") ||
+      author === "Anfitrión";
+
+    if (hasTenantAuth) {
+      const auth = await verifyEventAccess(request, eventId);
+      if (!auth.authorized) {
+        return auth.errorResponse!;
+      }
+    }
 
     // 1. Verificar en DynamoDB que el evento exista y esté activo
     const event = await AureaRepository.getEventMeta(eventId);

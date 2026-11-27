@@ -74,6 +74,14 @@ export function generateAccessPin(): string {
 }
 
 /**
+ * Generador de Código de Cuenta oficial corto y elegante (AUR-XXXX)
+ */
+export function generateAccountCode(): string {
+  const digits = Math.floor(1000 + Math.random() * 9000).toString();
+  return `AUR-${digits}`;
+}
+
+/**
  * Generador de slugs seguros para URLs
  */
 export function slugify(text: string): string {
@@ -287,6 +295,7 @@ export class AureaRepository {
     const cleanEmail = data.email.trim().toLowerCase();
     const slug = slugify(data.hostName);
     const tenantId = `tenant_${slug}_${Date.now().toString(36)}`;
+    const accountCode = generateAccountCode();
     const accessPin = generateAccessPin();
     const magicSlug = `${slug}-${new Date().getFullYear()}`;
 
@@ -296,6 +305,7 @@ export class AureaRepository {
 
     const newTenant: Tenant = {
       tenantId,
+      accountCode,
       name: data.hostName,
       email: cleanEmail,
       phone: data.phone,
@@ -362,12 +372,14 @@ export class AureaRepository {
 
     const eventId = tenant.primaryEventId || tenant.magicSlug || `evento-${slugify(tenant.name)}-${Date.now().toString(36)}`;
     const accessPin = tenant.accessPin || generateAccessPin();
+    const accountCode = tenant.accountCode || generateAccountCode();
     const updatedPlan = options?.plan || tenant.plan || "FIRMA";
     const maxGuests = options?.maxGuestsPerEvent || tenant.maxGuestsPerEvent || 200;
     const paidAmount = options?.paidAmountGTQ || options?.amountPaid || tenant.paidAmountGTQ || 2600;
 
     const updatedTenant: Tenant = {
       ...tenant,
+      accountCode,
       status: "ACTIVE",
       plan: updatedPlan,
       maxGuestsPerEvent: maxGuests,
@@ -439,7 +451,7 @@ export class AureaRepository {
     }
 
     memTenants[tenantId] = { ...updatedTenant };
-    const magicUrl = `/dashboard?tenant=${tenantId}&pin=${accessPin}&eventId=${eventId}`;
+    const magicUrl = `/dashboard?account=${accountCode}&pin=${accessPin}&eventId=${eventId}`;
 
     return {
       tenant: updatedTenant,
@@ -589,6 +601,87 @@ export class AureaRepository {
     }
     const found = Object.values(memTenants).find((t) => t.email.toLowerCase() === cleanEmail);
     return found || null;
+  }
+
+  /**
+   * Busca un Tenant por su Código de Cuenta oficial (AUR-XXXX)
+   */
+  static async getTenantByAccountCode(code: string): Promise<Tenant | null> {
+    const cleanCode = code.trim().toUpperCase();
+    try {
+      const response = await docClient.send(
+        new ScanCommand({
+          TableName: TABLE_NAME,
+          FilterExpression: "SK = :sk AND accountCode = :code",
+          ExpressionAttributeValues: {
+            ":sk": "PROFILE",
+            ":code": cleanCode,
+          },
+        })
+      );
+      if (response.Items && response.Items.length > 0) {
+        return response.Items[0] as Tenant;
+      }
+    } catch (err: any) {
+      console.warn("[AureaRepository.getTenantByAccountCode] Scan fallback:", err?.message);
+    }
+    const found = Object.values(memTenants).find(
+      (t) => (t.accountCode || "").toUpperCase() === cleanCode
+    );
+    return found || null;
+  }
+
+  /**
+   * Resuelve un Tenant usando cualquier identificador ingresado por el usuario:
+   * 1. Código de Cuenta (AUR-XXXX)
+   * 2. Correo electrónico (lucia@gmail.com)
+   * 3. tenantId interno (tenant_...)
+   */
+  static async resolveTenantIdentifier(identifier: string): Promise<Tenant | null> {
+    if (!identifier) return null;
+    const clean = identifier.trim();
+
+    // 1. Si parece código de cuenta AUR-XXXX o prefijo AUR
+    if (/^AUR-\d{4}$/i.test(clean) || clean.toUpperCase().startsWith("AUR-")) {
+      const byCode = await this.getTenantByAccountCode(clean);
+      if (byCode) return byCode;
+    }
+
+    // 2. Si es correo electrónico
+    if (clean.includes("@")) {
+      const byEmail = await this.getTenantByEmail(clean);
+      if (byEmail) return byEmail;
+    }
+
+    // 3. Buscar por tenantId directo
+    const byId = await this.getTenant(clean);
+    if (byId) return byId;
+
+    // 4. Fallback: intentar por accountCode directo
+    const fallbackCode = await this.getTenantByAccountCode(clean);
+    if (fallbackCode) return fallbackCode;
+
+    return null;
+  }
+
+  /**
+   * Restablece el PIN de acceso a un Tenant (genera uno nuevo de 6 dígitos)
+   */
+  static async resetTenantPin(tenantId: string): Promise<Tenant | null> {
+    const tenant = await this.getTenant(tenantId);
+    if (!tenant) return null;
+
+    const newPin = generateAccessPin();
+    const accountCode = tenant.accountCode || generateAccountCode();
+    const now = new Date().toISOString();
+
+    const updated = await this.updateTenant(tenantId, {
+      accessPin: newPin,
+      accountCode,
+      updatedAt: now,
+    });
+
+    return updated;
   }
 
   /**

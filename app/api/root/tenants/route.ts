@@ -43,14 +43,17 @@ export async function POST(request: NextRequest) {
       const waText = encodeURIComponent(
         `\u2728 *¡BIENVENIDO A ÁUREA! TU ESPACIO ESTÁ ACTIVO* \u2728\n\n` +
           `Hola *${releaseResult.tenant.name}*, tu acceso al panel de anfitrión para tu *${releaseResult.tenant.celebrationType || "Celebración"}* ha sido liberado:\n\n` +
-          `\uD83D\uDD17 *Enlace directo:* \n${fullMagicUrl}\n\n` +
+          `\uD83D\uDCBC *Código de Cuenta:* *${releaseResult.tenant.accountCode || releaseResult.tenant.tenantId}*\n` +
+          `\u2709\uFE0F *Correo:* ${releaseResult.tenant.email}\n` +
           `\uD83D\uDD10 *PIN de Acceso (6 dígitos):* *${releaseResult.tenant.accessPin}*\n\n` +
+          `\uD83D\uDD17 *Enlace directo a tu panel:* \n${fullMagicUrl}\n\n` +
           `\u2022 Desde aquí podrás registrar a tus invitados, acomodar tus mesas en el jardín y monitorear confirmaciones en tiempo real.`
       );
 
       return NextResponse.json({
         success: true,
         tenant: releaseResult.tenant,
+        accountCode: releaseResult.tenant.accountCode,
         eventId: releaseResult.eventId,
         accessPin: releaseResult.tenant.accessPin,
         magicUrl: releaseResult.magicUrl,
@@ -121,14 +124,17 @@ export async function POST(request: NextRequest) {
     const waText = encodeURIComponent(
       `\u2728 *¡BIENVENIDO A ÁUREA! TU ESPACIO ESTÁ ACTIVO* \u2728\n\n` +
         `Hola *${clientName}*, tu acceso al panel de anfitrión para tu *${celebrationType}* ha sido liberado:\n\n` +
-        `\uD83D\uDD17 *Enlace directo:* \n${fullMagicUrl}\n\n` +
+        `\uD83D\uDCBC *Código de Cuenta:* *${releaseResult.tenant.accountCode || releaseResult.tenant.tenantId}*\n` +
+        `\u2709\uFE0F *Correo:* ${email}\n` +
         `\uD83D\uDD10 *PIN de Acceso (6 dígitos):* *${releaseResult.tenant.accessPin}*\n\n` +
-        `\u2022 ¡Felicidades por tu evento!`
+        `\uD83D\uDD17 *Enlace directo:* \n${fullMagicUrl}\n\n` +
+        `\u2022 Desde aquí podrás registrar a tus invitados y diseñar tu evento en tiempo real.`
     );
 
     return NextResponse.json({
       success: true,
       tenant: releaseResult.tenant,
+      accountCode: releaseResult.tenant.accountCode,
       eventId: releaseResult.eventId,
       accessPin: releaseResult.tenant.accessPin,
       magicUrl: releaseResult.magicUrl,
@@ -147,13 +153,55 @@ export async function POST(request: NextRequest) {
 export async function PATCH(request: NextRequest) {
   try {
     const body = await request.json();
-    const { tenantId, status, plan, maxGuestsPerEvent, amountPaid } = body;
+    const { tenantId, action, status, plan, maxGuestsPerEvent, amountPaid } = body;
 
     if (!tenantId) {
       return NextResponse.json(
         { error: "tenantId es requerido para actualizar." },
         { status: 400 }
       );
+    }
+
+    // Caso especial: Reseteo de PIN desde /root
+    if (action === "RESET_PIN") {
+      const updatedTenant = await AureaRepository.resetTenantPin(tenantId);
+      if (!updatedTenant) {
+        return NextResponse.json(
+          { error: "Cliente no encontrado para restablecer PIN." },
+          { status: 404 }
+        );
+      }
+
+      const cleanPhone = (updatedTenant.phone || "").replace(/[^0-9]/g, "");
+      const origin =
+        request.headers.get("origin") ||
+        (request.headers.get("x-forwarded-host") ? `${request.headers.get("x-forwarded-proto") || "http"}://${request.headers.get("x-forwarded-host")}` : null) ||
+        (request.headers.get("host") ? `http://${request.headers.get("host")}` : null) ||
+        process.env.NEXT_PUBLIC_APP_URL ||
+        request.nextUrl.origin ||
+        "http://localhost:3000";
+
+      const directUrl = `${origin}/dashboard?account=${updatedTenant.accountCode || updatedTenant.tenantId}&pin=${updatedTenant.accessPin}`;
+
+      const waText = encodeURIComponent(
+        `\uD83D\uDD10 *ÁUREA · NUEVO PIN DE SEGURIDAD GENERADO* \uD83D\uDD10\n\n` +
+          `Hola *${updatedTenant.name}*, tu PIN confidencial de acceso para tu *${updatedTenant.celebrationType || "Celebración"}* ha sido restablecido:\n\n` +
+          `\uD83D\uDCBC *Código de Cuenta:* *${updatedTenant.accountCode || updatedTenant.tenantId}*\n` +
+          `\u2709\uFE0F *Correo:* ${updatedTenant.email}\n` +
+          `\uD83D\uDD11 *Nuevo PIN Privado (6 dígitos):* *${updatedTenant.accessPin}*\n\n` +
+          `\uD83D\uDD17 *Enlace directo al panel:* \n${directUrl}\n\n` +
+          `\u2022 Guarda este mensaje en un lugar seguro para ingresar cuando lo necesites.`
+      );
+
+      return NextResponse.json({
+        success: true,
+        tenant: updatedTenant,
+        accountCode: updatedTenant.accountCode,
+        accessPin: updatedTenant.accessPin,
+        magicUrl: `/dashboard?account=${updatedTenant.accountCode || updatedTenant.tenantId}&pin=${updatedTenant.accessPin}`,
+        fullMagicUrl: directUrl,
+        waLink: `https://wa.me/${cleanPhone}?text=${waText}`,
+      });
     }
 
     const updates: any = {};

@@ -580,6 +580,7 @@ export const MOCK_PHOTOS: Record<string, LivePhoto[]> = {
 export const MOCK_TENANTS: Record<string, Tenant> = {
   "tenant_camilandres": {
     tenantId: "tenant_camilandres",
+    accountCode: "AUR-4829",
     name: "Camila & Andrés",
     email: "camila@rivasmolina.com",
     phone: "+502 5555 1234",
@@ -602,6 +603,7 @@ export const MOCK_TENANTS: Record<string, Tenant> = {
   },
   "tenant_planner_sofia": {
     tenantId: "tenant_planner_sofia",
+    accountCode: "AUR-9120",
     name: "Sofía Mendoza (Atelier Bodas Antigua)",
     email: "sofia@atelierantigua.gt",
     phone: "+502 4444 8899",
@@ -624,6 +626,7 @@ export const MOCK_TENANTS: Record<string, Tenant> = {
   },
   "tenant_mateo_bautizo": {
     tenantId: "tenant_mateo_bautizo",
+    accountCode: "AUR-3411",
     name: "Familia Castillo Morales",
     email: "mcastillo@guate.com",
     phone: "+502 5111 2233",
@@ -646,6 +649,7 @@ export const MOCK_TENANTS: Record<string, Tenant> = {
   },
   "tenant_pending_lucia": {
     tenantId: "tenant_pending_lucia",
+    accountCode: "AUR-7722",
     name: "Lucía Méndez & Familia",
     email: "lucia.mendez.xv@gmail.com",
     phone: "+502 5890 1122",
@@ -667,6 +671,7 @@ export const MOCK_TENANTS: Record<string, Tenant> = {
   },
   "tenant_pending_gala_corp": {
     tenantId: "tenant_pending_gala_corp",
+    accountCode: "AUR-6518",
     name: "Banco Internacional de Occidente",
     email: "eventos@bancointernacional.gt",
     phone: "+502 2333 4400",

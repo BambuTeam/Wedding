@@ -11,6 +11,8 @@ interface CredentialsSuccessModalProps {
     clientName: string;
     phone: string;
     celebrationType?: string;
+    accountCode?: string;
+    email?: string;
     accessUrl: string;
     accessPin: string;
     eventId?: string;
@@ -24,6 +26,7 @@ export function CredentialsSuccessModal({
 }: CredentialsSuccessModalProps) {
   const [copiedUrl, setCopiedUrl] = useState(false);
   const [copiedPin, setCopiedPin] = useState(false);
+  const [copiedAccount, setCopiedAccount] = useState(false);
   const [mounted, setMounted] = useState(false);
 
   useEffect(() => {
@@ -62,18 +65,30 @@ export function CredentialsSuccessModal({
     setTimeout(() => setCopiedPin(false), 2500);
   };
 
+  const handleCopyAccount = () => {
+    if (data.accountCode) {
+      navigator.clipboard.writeText(data.accountCode);
+      setCopiedAccount(true);
+      setTimeout(() => setCopiedAccount(false), 2500);
+    }
+  };
+
   const handleOpenWhatsApp = () => {
     // Limpiar número de teléfono eliminando espacios y signos para wa.me
     const cleanPhone = data.phone.replace(/[^0-9]/g, "");
     const targetPhone = cleanPhone.length >= 8 ? cleanPhone : "50255551234";
 
+    const accountIdentifier = data.accountCode || data.email || "Código de cuenta";
+
     // Usar secuencias Unicode explícitas (\u2728, \uD83D\uDD17, \uD83D\uDD10, \u2022) para evitar corrupción de encoding en cualquier SO/Navegador
     const text = encodeURIComponent(
       `\u2728 *¡BIENVENIDO A ÁUREA! TU ESPACIO ESTÁ ACTIVO* \u2728\n\n` +
-        `Hola *${data.clientName}*, nos complace anunciarte que tu acceso exclusivo al panel de anfitrión para tu *${data.celebrationType || "Celebración"}* ha sido liberado con éxito.\n\n` +
-        `Desde aquí podrás registrar a tus invitados, acomodar tus mesas en el jardín y monitorear confirmaciones en tiempo real:\n\n` +
+        `Hola *${data.clientName}*, tu acceso al panel de anfitrión para tu *${data.celebrationType || "Celebración"}* ha sido liberado con éxito.\n\n` +
+        `\uD83D\uDCBC *Código de Cuenta:* *${accountIdentifier}*\n` +
+        (data.email ? `\u2709\uFE0F *Correo registrado:* ${data.email}\n` : "") +
+        `\uD83D\uDD10 *PIN confidencial de acceso (6 dígitos):* *${data.accessPin}*\n\n` +
         `\uD83D\uDD17 *Enlace directo a tu panel:* \n${computedAccessUrl}\n\n` +
-        `\uD83D\uDD10 *PIN confidencial de acceso:* *${data.accessPin}*\n\n` +
+        `\u2022 Puedes iniciar sesión con tu Código de Cuenta (${accountIdentifier}) o tu correo electrónico más tu PIN de 6 dígitos.\n` +
         `\u2022 Guarda este mensaje para ingresar cuando lo necesites.\n` +
         `\u2022 ¡Estamos felices de acompañarte en este gran momento!`
     );
@@ -110,11 +125,46 @@ export function CredentialsSuccessModal({
 
         {/* Credentials Box */}
         <div className="bg-[#FAF7F2] rounded-2xl p-5 border border-[#EADBCC] space-y-4">
+          {/* Código de Cuenta & Correo */}
+          {data.accountCode && (
+            <div className="flex items-center justify-between pb-3 border-b border-[#EADBCC]">
+              <div>
+                <span className="text-[11px] uppercase tracking-wider text-zinc-500 font-semibold block">
+                  Código de Cuenta Oficial
+                </span>
+                <span className="text-xl font-mono font-bold tracking-wider text-[#8A6D1C]">
+                  {data.accountCode}
+                </span>
+                {data.email && (
+                  <span className="text-[11px] text-zinc-500 block mt-0.5">
+                    {data.email}
+                  </span>
+                )}
+              </div>
+              <button
+                onClick={handleCopyAccount}
+                className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-white border border-zinc-200 text-zinc-700 hover:text-zinc-950 hover:bg-zinc-50 text-xs font-semibold shadow-sm transition-all"
+              >
+                {copiedAccount ? (
+                  <>
+                    <Check className="w-3.5 h-3.5 text-emerald-600" />
+                    <span className="text-emerald-700 font-bold">Copiado</span>
+                  </>
+                ) : (
+                  <>
+                    <Copy className="w-3.5 h-3.5" />
+                    <span>Copiar Código</span>
+                  </>
+                )}
+              </button>
+            </div>
+          )}
+
           {/* PIN */}
           <div className="flex items-center justify-between pb-3 border-b border-[#EADBCC]">
             <div>
               <span className="text-[11px] uppercase tracking-wider text-zinc-500 font-semibold block">
-                PIN de Acceso Privado
+                PIN de Acceso Privado (6 dígitos)
               </span>
               <span className="text-2xl font-mono font-bold tracking-widest text-zinc-900">
                 {data.accessPin}

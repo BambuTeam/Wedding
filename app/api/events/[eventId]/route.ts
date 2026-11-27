@@ -3,6 +3,7 @@ import { EventsRepository } from "@/lib/db/repository";
 import { AureaRepository } from "@/lib/db/aureaRepository";
 import { parseMusicUrl } from "@/lib/musicUtils";
 import { EventMusicConfig } from "@/lib/types";
+import { verifyEventAccess } from "@/lib/auth/tenantGuard";
 
 export const dynamic = "force-dynamic";
 
@@ -12,7 +13,14 @@ export async function GET(
 ) {
   try {
     const eventId = params.eventId;
-    const event = await AureaRepository.getEventMeta(eventId) || await EventsRepository.getEvent(eventId);
+
+    // Validación de aislamiento multi-tenant
+    const auth = await verifyEventAccess(request, eventId);
+    if (!auth.authorized) {
+      return auth.errorResponse!;
+    }
+
+    const event = auth.event || await AureaRepository.getEventMeta(eventId) || await EventsRepository.getEvent(eventId);
 
     if (!event) {
       return NextResponse.json({ error: "Evento no encontrado" }, { status: 404 });
@@ -32,6 +40,13 @@ export async function PATCH(
 ) {
   try {
     const eventId = params.eventId;
+
+    // Validación de aislamiento multi-tenant
+    const auth = await verifyEventAccess(request, eventId);
+    if (!auth.authorized) {
+      return auth.errorResponse!;
+    }
+
     const body = await request.json();
 
     if (!body) {
