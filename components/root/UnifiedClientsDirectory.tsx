@@ -4,13 +4,11 @@ import React, { useState } from 'react';
 import {
   Users,
   Search,
-  CheckCircle2,
   Clock,
   Ban,
   Archive,
   MessageCircle,
   Building2,
-  Key,
   Copy,
   Check,
   ExternalLink,
@@ -32,6 +30,8 @@ interface UnifiedClientsDirectoryProps {
   onRefresh: () => void;
 }
 
+type QuickPillFilter = 'ALL' | 'ACTIVE' | 'PENDING' | 'PLANNERS';
+
 export function UnifiedClientsDirectory({
   tenants,
   events,
@@ -40,10 +40,61 @@ export function UnifiedClientsDirectory({
   onRefresh,
 }: UnifiedClientsDirectoryProps) {
   const [searchTerm, setSearchTerm] = useState('');
-  const [roleFilter, setRoleFilter] = useState<'ALL' | TenantRole>('ALL');
-  const [statusFilter, setStatusFilter] = useState<'ALL' | TenantStatus>('ALL');
+  const [pillFilter, setPillFilter] = useState<QuickPillFilter>('ALL');
   const [expandedPlannerId, setExpandedPlannerId] = useState<string | null>(null);
   const [copiedPinId, setCopiedPinId] = useState<string | null>(null);
+
+  // Formateador de nombres de planes humanos
+  const formatPlanName = (plan?: string) => {
+    switch (plan?.toUpperCase()) {
+      case 'ESENCIAL':
+        return 'Plan Esencial';
+      case 'FIRMA':
+        return 'Plan Firma';
+      case 'GRAN_CELEBRACION':
+        return 'Gran Celebración';
+      case 'PLANNER_PRO':
+        return 'Planner Pro';
+      default:
+        return plan ? `Plan ${plan}` : 'Plan Esencial';
+    }
+  };
+
+  // Badge de estado operativo de cuenta
+  const getStatusBadge = (status: TenantStatus) => {
+    switch (status) {
+      case 'ACTIVE':
+        return (
+          <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-[11px] font-bold bg-emerald-50 text-emerald-700 border border-emerald-200 whitespace-nowrap shrink-0">
+            <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" />
+            Activo
+          </span>
+        );
+      case 'PENDING_RELEASE':
+        return (
+          <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-[11px] font-bold bg-amber-50 text-amber-700 border border-amber-200 whitespace-nowrap shrink-0">
+            <Clock className="w-3 h-3 text-amber-600" />
+            Por liberar
+          </span>
+        );
+      case 'SUSPENDED':
+        return (
+          <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-[11px] font-bold bg-rose-50 text-rose-700 border border-rose-200 whitespace-nowrap shrink-0">
+            <Ban className="w-3 h-3 text-rose-600" />
+            Suspendido
+          </span>
+        );
+      case 'ARCHIVED':
+        return (
+          <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-[11px] font-bold bg-zinc-100 text-zinc-600 border border-zinc-200 whitespace-nowrap shrink-0">
+            <Archive className="w-3 h-3 text-zinc-500" />
+            Archivado
+          </span>
+        );
+      default:
+        return null;
+    }
+  };
 
   // Filtrado de tenants
   const filteredTenants = tenants.filter((tenant) => {
@@ -60,10 +111,14 @@ export function UnifiedClientsDirectory({
       (linkedEvent?.title || '').toLowerCase().includes(term) ||
       (linkedEvent?.venueCity || '').toLowerCase().includes(term);
 
-    const matchesRole = roleFilter === 'ALL' || tenant.role === roleFilter;
-    const matchesStatus = statusFilter === 'ALL' || tenant.status === statusFilter;
+    if (!matchesSearch) return false;
 
-    return matchesSearch && matchesRole && matchesStatus;
+    // Filtros por píldora rápida
+    if (pillFilter === 'ACTIVE' && tenant.status !== 'ACTIVE') return false;
+    if (pillFilter === 'PENDING' && tenant.status !== 'PENDING_RELEASE') return false;
+    if (pillFilter === 'PLANNERS' && tenant.role !== 'PLANNER') return false;
+
+    return true;
   });
 
   const handleCopyPin = (e: React.MouseEvent, pin: string, id: string) => {
@@ -73,87 +128,64 @@ export function UnifiedClientsDirectory({
     setTimeout(() => setCopiedPinId(null), 2000);
   };
 
-  const getStatusBadge = (status: TenantStatus) => {
-    switch (status) {
-      case 'ACTIVE':
-        return (
-          <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-[11px] font-bold bg-emerald-50 text-emerald-700 border border-emerald-200">
-            <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" />
-            Activo
-          </span>
-        );
-      case 'PENDING_RELEASE':
-        return (
-          <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-[11px] font-bold bg-amber-50 text-amber-700 border border-amber-200">
-            <Clock className="w-3 h-3 text-amber-600" />
-            Pendiente
-          </span>
-        );
-      case 'SUSPENDED':
-        return (
-          <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-[11px] font-bold bg-rose-50 text-rose-700 border border-rose-200">
-            <Ban className="w-3 h-3 text-rose-600" />
-            Suspendido
-          </span>
-        );
-      case 'ARCHIVED':
-        return (
-          <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-[11px] font-bold bg-zinc-100 text-zinc-600 border border-zinc-200">
-            <Archive className="w-3 h-3 text-zinc-500" />
-            Archivado
-          </span>
-        );
-      default:
-        return null;
-    }
-  };
+  // Conteo de píldoras
+  const totalCount = tenants.length;
+  const activeCount = tenants.filter((t) => t.status === 'ACTIVE').length;
+  const pendingCount = tenants.filter((t) => t.status === 'PENDING_RELEASE').length;
+  const plannersCount = tenants.filter((t) => t.role === 'PLANNER').length;
 
   return (
     <div className="space-y-4 font-sans">
-      {/* Search and Filters Bar */}
-      <div className="flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-3 bg-white p-3.5 rounded-2xl border border-zinc-200 shadow-sm">
+      {/* Search and Quick Filters Bar */}
+      <div className="flex flex-col lg:flex-row items-stretch lg:items-center justify-between gap-3 bg-white p-3.5 rounded-2xl border border-zinc-200 shadow-xs">
         {/* Search Input */}
         <div className="relative flex-1">
           <Search className="w-4 h-4 text-zinc-400 absolute left-3.5 top-1/2 -translate-y-1/2" />
           <input
             type="text"
-            placeholder="Buscar por cliente, AUR-XXXX, correo, WhatsApp o evento..."
+            placeholder="Buscar por cliente, AUR-XXXX, correo, WhatsApp o celebración..."
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
             className="w-full pl-9 pr-4 py-2 text-xs rounded-xl border border-zinc-200 bg-zinc-50/70 focus:bg-white focus:outline-none focus:ring-2 focus:ring-zinc-900 transition-all font-medium text-zinc-800 placeholder:text-zinc-400"
           />
         </div>
 
-        {/* Filters */}
-        <div className="flex items-center gap-2">
-          {/* Role Filter */}
-          <select
-            value={roleFilter}
-            onChange={(e) => setRoleFilter(e.target.value as any)}
-            className="text-xs font-semibold bg-zinc-50 border border-zinc-200 rounded-xl px-3 py-2 text-zinc-700 focus:outline-none focus:ring-2 focus:ring-zinc-900"
-          >
-            <option value="ALL">Todos los tipos</option>
-            <option value="COUPLE">Parejas & Anfitriones</option>
-            <option value="PLANNER">Planners & Agencias</option>
-          </select>
-
-          {/* Status Filter */}
-          <select
-            value={statusFilter}
-            onChange={(e) => setStatusFilter(e.target.value as any)}
-            className="text-xs font-semibold bg-zinc-50 border border-zinc-200 rounded-xl px-3 py-2 text-zinc-700 focus:outline-none focus:ring-2 focus:ring-zinc-900"
-          >
-            <option value="ALL">Todos los estados</option>
-            <option value="ACTIVE">Activos</option>
-            <option value="PENDING_RELEASE">Pendientes</option>
-            <option value="SUSPENDED">Suspendidos</option>
-            <option value="ARCHIVED">Archivados</option>
-          </select>
+        {/* 1-Click Quick Filter Pills */}
+        <div className="flex items-center gap-1.5 overflow-x-auto pb-1 lg:pb-0 shrink-0">
+          {[
+            { id: 'ALL', label: 'Todos', count: totalCount },
+            { id: 'ACTIVE', label: 'Activos', count: activeCount },
+            { id: 'PENDING', label: 'Por liberar', count: pendingCount },
+            { id: 'PLANNERS', label: 'Agencias', count: plannersCount },
+          ].map((pill) => {
+            const isSelected = pillFilter === pill.id;
+            return (
+              <button
+                key={pill.id}
+                type="button"
+                onClick={() => setPillFilter(pill.id as QuickPillFilter)}
+                className={`px-3 py-1.5 rounded-xl text-xs font-bold transition-all whitespace-nowrap shrink-0 flex items-center gap-1.5 ${
+                  isSelected
+                    ? 'bg-zinc-900 text-white shadow-xs'
+                    : 'bg-zinc-100 hover:bg-zinc-200 text-zinc-600'
+                }`}
+              >
+                <span>{pill.label}</span>
+                <span
+                  className={`text-[10px] font-mono px-1.5 py-0.2 rounded-full ${
+                    isSelected ? 'bg-zinc-800 text-zinc-200' : 'bg-zinc-200/80 text-zinc-600'
+                  }`}
+                >
+                  {pill.count}
+                </span>
+              </button>
+            );
+          })}
         </div>
       </div>
 
       {/* Tabla Maestra Unificada */}
-      <div className="bg-white rounded-2xl border border-zinc-200 shadow-sm overflow-hidden">
+      <div className="bg-white rounded-2xl border border-zinc-200 shadow-xs overflow-hidden">
         <div className="overflow-x-auto">
           <table className="w-full text-left border-collapse text-xs">
             <thead>
@@ -194,6 +226,10 @@ export function UnifiedClientsDirectory({
                   const tablesCount = linkedEvent?.totalTables || 0;
                   const photosCount = linkedEvent?.totalPhotosS3 || 0;
 
+                  // Monto formateado
+                  const amount = tenant.paidAmountGTQ || tenant.amountPaid || 2600;
+                  const formattedAmount = `Q ${Number(amount).toLocaleString('es-GT')}`;
+
                   // URL de suplantación segura como SuperAdmin
                   const impersonationUrl = `/dashboard?account=${accountCode}&pin=${tenant.accessPin || '782910'}&eventId=${linkedEvent?.eventId || ''}`;
 
@@ -204,7 +240,7 @@ export function UnifiedClientsDirectory({
                         <td className="py-4 px-4 align-top">
                           <div className="flex items-start gap-3">
                             <div
-                              className={`w-10 h-10 rounded-xl flex items-center justify-center font-bold text-xs shrink-0 shadow-sm ${
+                              className={`w-10 h-10 rounded-xl flex items-center justify-center font-bold text-xs shrink-0 shadow-2xs ${
                                 tenant.role === 'PLANNER'
                                   ? 'bg-purple-100 text-purple-900 border border-purple-200'
                                   : 'bg-[#F2ECE1] text-[#7A5C30] border border-[#DFC9A6]'
@@ -219,27 +255,27 @@ export function UnifiedClientsDirectory({
 
                             <div className="space-y-1">
                               <div className="flex items-center gap-2">
-                                <span className="font-bold text-sm text-zinc-900 group-hover:text-black leading-tight">
+                                <span className="font-bold text-sm text-zinc-900 group-hover:text-black leading-tight whitespace-nowrap">
                                   {tenant.name}
                                 </span>
                                 <span className="text-[10px] font-mono font-extrabold tracking-wider px-2 py-0.5 rounded-full bg-amber-50 text-[#8A6D1C] border border-amber-200/80 whitespace-nowrap shrink-0">
                                   {accountCode}
                                 </span>
                                 {tenant.role === 'PLANNER' && (
-                                  <span className="text-[9px] uppercase font-extrabold tracking-wider px-1.5 py-0.5 rounded bg-purple-100 text-purple-700 shrink-0">
+                                  <span className="text-[9px] uppercase font-extrabold tracking-wider px-1.5 py-0.5 rounded bg-purple-100 text-purple-700 whitespace-nowrap shrink-0">
                                     Agencia
                                   </span>
                                 )}
                               </div>
 
-                              <div className="flex flex-col sm:flex-row sm:items-center gap-1 sm:gap-2.5 text-xs text-zinc-500">
+                              <div className="flex flex-col sm:flex-row sm:items-center gap-1 sm:gap-2.5 text-xs text-zinc-500 whitespace-nowrap">
                                 <span className="truncate max-w-[190px]">{tenant.email}</span>
                                 <span className="hidden sm:inline text-zinc-300">•</span>
                                 <a
                                   href={waUrl}
                                   target="_blank"
                                   rel="noopener noreferrer"
-                                  className="inline-flex items-center gap-1 text-emerald-700 hover:text-emerald-800 font-semibold"
+                                  className="inline-flex items-center gap-1 text-emerald-700 hover:text-emerald-800 font-semibold whitespace-nowrap"
                                 >
                                   <MessageCircle className="w-3.5 h-3.5" />
                                   <span>{tenant.phone}</span>
@@ -255,20 +291,20 @@ export function UnifiedClientsDirectory({
                             <div className="space-y-1">
                               <div className="flex items-center gap-1.5">
                                 <span className="font-bold text-zinc-900">{linkedEvent.title}</span>
-                                <span className="text-[10px] font-bold uppercase tracking-wider px-1.5 py-0.5 rounded-full bg-zinc-100 text-zinc-600">
+                                <span className="text-[10px] font-bold uppercase tracking-wider px-2 py-0.5 rounded-full bg-zinc-100 text-zinc-600 whitespace-nowrap shrink-0">
                                   {linkedEvent.category || tenant.celebrationType || 'Boda'}
                                 </span>
                               </div>
                               <div className="text-zinc-500 text-[11px] flex items-center gap-1">
-                                <Calendar className="w-3 h-3 text-zinc-400" />
-                                <span>{linkedEvent.venueCity || linkedEvent.eventDateFormatted || 'Guatemala'}</span>
+                                <Calendar className="w-3 h-3 text-zinc-400 shrink-0" />
+                                <span className="truncate">{linkedEvent.venueCity || linkedEvent.eventDateFormatted || 'Guatemala'}</span>
                               </div>
 
                               {tenant.role === 'PLANNER' && tenantEvents.length > 1 && (
                                 <button
                                   type="button"
                                   onClick={() => setExpandedPlannerId(isExpanded ? null : tenant.tenantId)}
-                                  className="inline-flex items-center gap-1 text-[11px] text-purple-700 hover:text-purple-900 font-bold mt-1"
+                                  className="inline-flex items-center gap-1 text-[11px] text-purple-700 hover:text-purple-900 font-bold mt-1 whitespace-nowrap"
                                 >
                                   <span>{isExpanded ? 'Ocultar' : `Ver ${tenantEvents.length} eventos`}</span>
                                   {isExpanded ? <ChevronUp className="w-3 h-3" /> : <ChevronDown className="w-3 h-3" />}
@@ -276,7 +312,15 @@ export function UnifiedClientsDirectory({
                               )}
                             </div>
                           ) : (
-                            <div className="text-zinc-400 italic">Sin evento vinculado</div>
+                            <button
+                              type="button"
+                              onClick={() => onOpenManageDrawer(tenant, null)}
+                              className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg border border-dashed border-amber-300 bg-amber-50/70 hover:bg-amber-100/80 text-amber-900 text-[11px] font-bold transition-all whitespace-nowrap shadow-2xs group/btn"
+                              title="Vincular o liberar evento para este cliente"
+                            >
+                              <Sparkles className="w-3.5 h-3.5 text-amber-600 shrink-0 group-hover/btn:rotate-12 transition-transform" />
+                              <span>+ Vincular / Liberar evento →</span>
+                            </button>
                           )}
                         </td>
 
@@ -317,69 +361,74 @@ export function UnifiedClientsDirectory({
                         {/* 4. Facturación & Estado */}
                         <td className="py-4 px-4 align-top">
                           <div className="space-y-1">
-                            <div className="flex items-center gap-2">
-                              <span className="font-mono font-bold text-zinc-900">
-                                Q{tenant.paidAmountGTQ || tenant.amountPaid || 2600}
+                            <div className="flex items-center gap-2 whitespace-nowrap">
+                              <span className="font-mono font-bold text-zinc-900 text-xs">
+                                {formattedAmount}
                               </span>
-                              <span
-                                className={`text-[10px] font-bold px-1.5 py-0.2 rounded ${
-                                  tenant.paymentStatus === 'PAID'
-                                    ? 'bg-emerald-100 text-emerald-800'
-                                    : 'bg-amber-100 text-amber-800'
-                                }`}
-                              >
-                                {tenant.paymentStatus === 'PAID' ? 'Pagado' : 'Pendiente'}
-                              </span>
+                              {tenant.paymentStatus === 'PAID' ? (
+                                <span className="text-[11px] font-semibold text-emerald-700 whitespace-nowrap">
+                                  • Pagado
+                                </span>
+                              ) : (
+                                <span className="text-[11px] font-semibold text-amber-700 whitespace-nowrap">
+                                  • Cobro pendiente
+                                </span>
+                              )}
                             </div>
 
-                            <div className="text-[11px] text-zinc-500">Plan {tenant.plan || 'FIRMA'}</div>
+                            <div className="text-[11px] text-zinc-500 whitespace-nowrap">
+                              {formatPlanName(tenant.plan)}
+                            </div>
 
-                            <div className="pt-0.5">{getStatusBadge(tenant.status)}</div>
+                            <div className="pt-0.5">
+                              {getStatusBadge(tenant.status)}
+                            </div>
                           </div>
                         </td>
 
-                        {/* 5. Credenciales & Control */}
+                        {/* 5. Credenciales & Control (Compacto en 2 niveles limpios) */}
                         <td className="py-4 px-4 align-top text-right">
-                          <div className="flex flex-col items-end gap-2">
-                            {/* PIN Pill con botón de copiar */}
-                            <div className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-xl bg-zinc-100 border border-zinc-200">
-                              <span className="text-[10px] uppercase font-bold text-zinc-400">PIN:</span>
-                              <span className="font-mono font-extrabold text-zinc-900 tracking-wider">
-                                {tenant.accessPin || '982341'}
+                          <div className="flex flex-col items-end gap-1.5">
+                            {/* Fila superior: Pill monospace compacta con botón de copiar y feedback */}
+                            <div className="inline-flex items-center gap-1.5 px-2 py-0.5 rounded-lg bg-zinc-100/90 border border-zinc-200/80 whitespace-nowrap">
+                              <span className="font-mono font-bold text-xs text-zinc-800 tracking-wider">
+                                PIN {tenant.accessPin || '782910'}
                               </span>
                               <button
                                 type="button"
-                                onClick={(e) => handleCopyPin(e, tenant.accessPin || '982341', tenant.tenantId)}
-                                className="p-1 rounded text-zinc-400 hover:text-zinc-800 hover:bg-zinc-200 transition-colors"
+                                onClick={(e) => handleCopyPin(e, tenant.accessPin || '782910', tenant.tenantId)}
+                                className="p-0.5 rounded text-zinc-400 hover:text-zinc-800 transition-colors"
                                 title="Copiar PIN"
                               >
                                 {copiedPinId === tenant.tenantId ? (
-                                  <Check className="w-3.5 h-3.5 text-emerald-600" />
+                                  <span className="inline-flex items-center gap-0.5 text-[10px] font-bold text-emerald-600">
+                                    <Check className="w-3 h-3" /> Copiado
+                                  </span>
                                 ) : (
-                                  <Copy className="w-3.5 h-3.5" />
+                                  <Copy className="w-3 h-3" />
                                 )}
                               </button>
                             </div>
 
-                            {/* Botones de Acción */}
-                            <div className="flex items-center gap-1.5">
-                              {/* Entrar al panel (suplantación) */}
+                            {/* Fila inferior: Botones horizontales compactos sin partir texto */}
+                            <div className="flex items-center justify-end gap-1.5 whitespace-nowrap">
+                              {/* Panel ↗ */}
                               <a
                                 href={impersonationUrl}
                                 target="_blank"
                                 rel="noopener noreferrer"
-                                className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-zinc-900 hover:bg-black text-white text-[11px] font-bold transition-all shadow-sm"
+                                className="inline-flex items-center gap-1 px-2.5 py-1 rounded-lg bg-zinc-900 hover:bg-black text-white text-[11px] font-bold transition-all shadow-2xs whitespace-nowrap shrink-0"
                                 title="Ingresar directamente a su panel de anfitrión"
                               >
-                                <span>Entrar al panel</span>
+                                <span>Panel</span>
                                 <ExternalLink className="w-3 h-3 text-[#DFC07D]" />
                               </a>
 
-                              {/* Botón Administrar (Drawer) */}
+                              {/* Administrar */}
                               <button
                                 type="button"
                                 onClick={() => onOpenManageDrawer(tenant, linkedEvent)}
-                                className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl border border-zinc-300 hover:border-zinc-900 hover:bg-zinc-100 text-zinc-800 text-[11px] font-bold transition-all shadow-sm"
+                                className="inline-flex items-center gap-1 px-2.5 py-1 rounded-lg border border-zinc-300 hover:border-zinc-900 hover:bg-zinc-100 text-zinc-800 text-[11px] font-bold transition-all shadow-2xs whitespace-nowrap shrink-0"
                                 title="Abrir panel de administración total"
                               >
                                 <SlidersHorizontal className="w-3 h-3 text-zinc-600" />
@@ -402,7 +451,7 @@ export function UnifiedClientsDirectory({
                                 {tenantEvents.map((evt) => (
                                   <div
                                     key={evt.eventId}
-                                    className="p-3 bg-white rounded-xl border border-purple-200/80 shadow-sm flex items-center justify-between"
+                                    className="p-3 bg-white rounded-xl border border-purple-200/80 shadow-xs flex items-center justify-between"
                                   >
                                     <div>
                                       <p className="font-bold text-xs text-zinc-900">{evt.title}</p>
