@@ -76,6 +76,8 @@ export interface HotelRecommendation {
 export type SculptureSlotKey = "slot_1" | "slot_2" | "slot_3" | "slot_4";
 export type SculptureFinish = "gold" | "rose_gold" | "silver_crystal" | "pearl_gold";
 export type SculpturePosition = "top-right" | "mid-left" | "mid-right" | "bottom-left";
+export type ThemePresetKey = "ATELIER_MARFIL" | "NOCHE_ESMERALDA" | "ROSA_ANTIGUA";
+export type EventCategoryKey = "BODA" | "XV_ANOS" | "BAUTIZO" | "CUMPLES" | "CORPORATIVO";
 
 export interface SculptureSlotConfig {
   id: string;
@@ -139,6 +141,8 @@ export interface EventMeta {
   hotels?: HotelRecommendation[];
   editorialPhotos?: EditorialPhoto[];
   custom3dSlots?: Custom3dSlots;
+  themePreset?: ThemePresetKey | string;
+  eventType?: EventCategoryKey | string;
   menu: {
     course: string;
     title: string;
@@ -200,6 +204,7 @@ export interface Tenant {
   tenantId: string;
   accountCode?: string; // Formato oficial corto: AUR-XXXX (ej. AUR-4829)
   name: string;
+  agencyName?: string;
   email: string;
   phone: string;
   role: TenantRole;

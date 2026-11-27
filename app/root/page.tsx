@@ -64,6 +64,7 @@ export default function RootDashboardPage() {
   } | null>(null);
 
   const [createModalOpen, setCreateModalOpen] = useState(false);
+  const [wizardPreloadTenant, setWizardPreloadTenant] = useState<Tenant | null>(null);
 
   // Fetch all initial data
   const loadData = useCallback(async () => {
@@ -384,11 +385,15 @@ export default function RootDashboardPage() {
             {/* Quick Action Button */}
             <div className="pb-3 sm:pb-0 flex items-center justify-end">
               <button
-                onClick={() => setCreateModalOpen(true)}
-                className="inline-flex items-center gap-2 px-3.5 py-2 bg-zinc-900 hover:bg-zinc-800 text-white rounded-lg text-xs font-semibold shadow-sm transition-all active:scale-[0.98]"
+                type="button"
+                onClick={() => {
+                  setWizardPreloadTenant(null);
+                  setCreateModalOpen(true);
+                }}
+                className="inline-flex items-center gap-2 px-4 py-2 bg-zinc-950 hover:bg-black text-white rounded-xl text-xs font-bold shadow-sm transition-all active:scale-[0.98] cursor-pointer whitespace-nowrap"
               >
-                <Plus className="w-4 h-4" />
-                <span>+ Crear y Liberar Cliente</span>
+                <Plus className="w-4 h-4 text-[#DFC07D]" />
+                <span>+ Nuevo Cliente & Evento</span>
               </button>
             </div>
           </div>
@@ -420,7 +425,10 @@ export default function RootDashboardPage() {
                   pendingTenants={pendingTenants}
                   isReleasing={releasingId}
                   onRelease={handleRelease}
-                  onOpenCreateModal={() => setCreateModalOpen(true)}
+                  onOpenCreateModal={(tenantToPreload) => {
+                    setWizardPreloadTenant(tenantToPreload || null);
+                    setCreateModalOpen(true);
+                  }}
                 />
               )}
             </>
@@ -463,8 +471,12 @@ export default function RootDashboardPage() {
 
       <CreateClientModal
         isOpen={createModalOpen}
-        onClose={() => setCreateModalOpen(false)}
+        onClose={() => {
+          setCreateModalOpen(false);
+          setWizardPreloadTenant(null);
+        }}
         onSubmit={handleCreateClient}
+        initialData={wizardPreloadTenant}
       />
     </div>
   );

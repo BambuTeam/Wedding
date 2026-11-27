@@ -21,7 +21,10 @@ import {
   LivePhoto,
   PlatformKpis,
   EventMusicConfig,
+  EventCategoryKey,
+  ThemePresetKey,
 } from "../types";
+import { FESTIVITY_PRESETS, THEME_PRESETS } from "../eventPresets";
 import {
   MOCK_EVENTS,
   MOCK_GUESTS,
@@ -277,6 +280,7 @@ export class AureaRepository {
     guestCount?: string | number;
     plan?: PlanType;
     role?: TenantRole;
+    agencyName?: string;
     notes?: string;
   }): Promise<Tenant> {
     const now = new Date().toISOString();
@@ -289,12 +293,13 @@ export class AureaRepository {
 
     const numGuests = typeof data.guestCount === "number" ? data.guestCount : parseInt(data.guestCount || "150", 10) || 150;
     const plan: PlanType = data.plan || (numGuests > 250 ? "GRAN_CELEBRACION" : numGuests > 120 ? "FIRMA" : "ESENCIAL");
-    const paidAmountGTQ = plan === "GRAN_CELEBRACION" ? 3800 : plan === "FIRMA" ? 2600 : 1400;
+    const paidAmountGTQ = plan === "PLANNER_PRO" ? 8500 : plan === "GRAN_CELEBRACION" ? 3800 : plan === "FIRMA" ? 2400 : 1200;
 
     const newTenant: Tenant = {
       tenantId,
       accountCode,
       name: data.hostName,
+      agencyName: data.agencyName,
       email: cleanEmail,
       phone: data.phone,
       role: data.role || "COUPLE",
@@ -303,7 +308,7 @@ export class AureaRepository {
       celebrationType: data.celebrationType || "Boda",
       estimatedDate: data.estimatedDate,
       estimatedGuests: numGuests,
-      maxEvents: data.role === "PLANNER" ? 5 : 1,
+      maxEvents: data.role === "PLANNER" ? 9999 : 1,
       maxGuestsPerEvent: numGuests,
       amountPaid: paidAmountGTQ,
       paidAmountGTQ,
@@ -339,7 +344,7 @@ export class AureaRepository {
 
   /**
    * Libera y activa a un cliente (1-Click Release)
-   * Pasa a estado ACTIVE, asigna/crea evento y actualiza DynamoDB
+   * Pasa a estado ACTIVE, asigna/crea evento enriquecido con festividad y 3D slots, y actualiza DynamoDB
    */
   static async releaseTenant(
     tenantId: string,
@@ -350,6 +355,16 @@ export class AureaRepository {
       paidAmountGTQ?: number;
       currency?: "GTQ" | "USD";
       paymentStatus?: PaymentStatus;
+      eventType?: EventCategoryKey;
+      themePreset?: ThemePresetKey;
+      title?: string;
+      eventDate?: string;
+      startTime?: string;
+      venueCity?: string;
+      venueName?: string;
+      role?: TenantRole;
+      agencyName?: string;
+      celebrationType?: string;
     }
   ): Promise<{ tenant: Tenant; eventId: string; magicUrl: string }> {
     const now = new Date().toISOString();
@@ -362,13 +377,31 @@ export class AureaRepository {
     const accessPin = tenant.accessPin || generateAccessPin();
     const accountCode = tenant.accountCode || generateAccountCode();
     const updatedPlan = options?.plan || tenant.plan || "FIRMA";
-    const maxGuests = options?.maxGuestsPerEvent || tenant.maxGuestsPerEvent || 200;
-    const paidAmount = options?.paidAmountGTQ || options?.amountPaid || tenant.paidAmountGTQ || 2600;
+    const maxGuests = options?.maxGuestsPerEvent || tenant.maxGuestsPerEvent || (updatedPlan === "ESENCIAL" ? 100 : updatedPlan === "GRAN_CELEBRACION" ? 350 : updatedPlan === "PLANNER_PRO" ? 9999 : 200);
+    const paidAmount = options?.paidAmountGTQ || options?.amountPaid || tenant.paidAmountGTQ || (updatedPlan === "ESENCIAL" ? 1200 : updatedPlan === "GRAN_CELEBRACION" ? 3800 : updatedPlan === "PLANNER_PRO" ? 8500 : 2400);
+
+    // Mapeo automático de preset de festividad y plantilla editorial
+    const rawType = (options?.eventType || tenant.celebrationType || "BODA").toUpperCase();
+    const resolvedCategoryKey: EventCategoryKey =
+      rawType.includes("XV") ? "XV_ANOS" :
+      rawType.includes("BAUTIZ") || rawType.includes("COMUN") ? "BAUTIZO" :
+      rawType.includes("CUMPLE") || rawType.includes("ANIVERSARIO") ? "CUMPLES" :
+      rawType.includes("CORP") || rawType.includes("GALA") ? "CORPORATIVO" :
+      "BODA";
+
+    const festivityPreset = FESTIVITY_PRESETS[resolvedCategoryKey] || FESTIVITY_PRESETS.BODA;
+    const resolvedThemeKey: ThemePresetKey = options?.themePreset || "ATELIER_MARFIL";
+    const themeConfig = THEME_PRESETS[resolvedThemeKey] || THEME_PRESETS.ATELIER_MARFIL;
+
+    const celebrationLabel = options?.celebrationType || festivityPreset.label;
 
     const updatedTenant: Tenant = {
       ...tenant,
       accountCode,
       status: "ACTIVE",
+      role: options?.role || tenant.role || "COUPLE",
+      agencyName: options?.agencyName || tenant.agencyName,
+      celebrationType: celebrationLabel,
       plan: updatedPlan,
       maxGuestsPerEvent: maxGuests,
       amountPaid: paidAmount,
@@ -397,43 +430,52 @@ export class AureaRepository {
         })
       );
 
-      // 2. Asegurar creación de Evento asociado si no existe
+      // 2. Construir / Enriquecer Evento Asociado
       const existingEvent = await this.getEventMeta(eventId);
-      if (!existingEvent) {
-        const newEventMeta: EventMeta = {
-          eventId,
-          category: tenant.celebrationType || "Boda",
-          title: tenant.celebrationType ? `${tenant.celebrationType} · ${tenant.name}` : tenant.name,
-          brideName: tenant.name.split("&")[0]?.trim() || tenant.name,
-          groomName: tenant.name.split("&")[1]?.trim() || "Familia",
-          tagline: "Bienvenidos a nuestra gran celebración",
-          eventDate: tenant.estimatedDate ? `${tenant.estimatedDate}T16:00:00` : "2026-12-12T16:00:00",
-          eventDateFormatted: tenant.estimatedDate || "Próximamente",
-          venueName: "Jardín Colonial",
-          venueCity: "Antigua Guatemala",
-          venueAddress: "Antigua Guatemala, Sacatepéquez",
-          googleMapsUrl: "https://maps.google.com",
-          wazeUrl: "https://waze.com",
-          coverImageUrl: "https://images.unsplash.com/photo-1519741497674-611481863552?auto=format&fit=crop&w=1800&q=80",
-          ourStory: "Una historia de amor celebrada junto a las personas que más amamos.",
-          dressCodeTitle: "Formal / Guayabera de Gala",
-          dressCodeDescription: "Vestimenta formal para jardín.",
-          paletteColors: ["#C5A059", "#4A5D4E", "#8C6D46"],
-          wifiSsid: "Aurea_Invitados",
-          wifiPassword: "Amor2026!",
-          itinerary: [],
-          giftRegistries: [],
-          menu: [],
-          active: true,
-          status: "LIVE",
-          tenantId,
-          maxGuestsLimit: maxGuests,
-          isArchived: false,
-          isLocked: false,
-        };
+      const targetDate = options?.eventDate || tenant.estimatedDate || "2026-11-28";
+      const targetTime = options?.startTime || "16:30";
+      const fullIsoDate = `${targetDate}T${targetTime}:00`;
+      const venueCity = options?.venueCity || "Antigua Guatemala";
+      const venueName = options?.venueName || (venueCity.includes("Antigua") ? "Convento de las Capuchinas" : "Jardín de Gala");
 
-        await this.createEvent(tenantId, newEventMeta);
-      }
+      const enrichedEventMeta: EventMeta = {
+        ...(existingEvent || {}),
+        eventId,
+        eventType: resolvedCategoryKey,
+        themePreset: resolvedThemeKey,
+        category: festivityPreset.category,
+        title: options?.title || existingEvent?.title || `${festivityPreset.category} · ${tenant.name}`,
+        brideName: tenant.name.split("&")[0]?.trim() || tenant.name,
+        groomName: tenant.name.split("&")[1]?.trim() || "Familia",
+        tagline: festivityPreset.description,
+        eventDate: fullIsoDate,
+        eventDateFormatted: targetDate,
+        venueName,
+        venueCity,
+        venueAddress: `${venueName}, ${venueCity}`,
+        googleMapsUrl: "https://maps.google.com",
+        wazeUrl: "https://waze.com",
+        coverImageUrl: existingEvent?.coverImageUrl || "https://images.unsplash.com/photo-1519741497674-611481863552?auto=format&fit=crop&w=1800&q=80",
+        ourStory: existingEvent?.ourStory || "Una celebración inolvidable compartida junto a las personas que más amamos.",
+        dressCodeTitle: festivityPreset.dressCodeTitle,
+        dressCodeDescription: festivityPreset.dressCodeDescription,
+        paletteColors: themeConfig.paletteColors,
+        paletteColorNames: themeConfig.paletteNames,
+        custom3dSlots: festivityPreset.slots,
+        wifiSsid: "Aurea_Invitados",
+        wifiPassword: "Amor2026!",
+        itinerary: (existingEvent?.itinerary && existingEvent.itinerary.length > 0) ? existingEvent.itinerary : festivityPreset.itinerary,
+        giftRegistries: existingEvent?.giftRegistries || [],
+        menu: existingEvent?.menu || [],
+        active: true,
+        status: "LIVE",
+        tenantId,
+        maxGuestsLimit: maxGuests,
+        isArchived: false,
+        isLocked: false,
+      };
+
+      await this.createEvent(tenantId, enrichedEventMeta);
     } catch (err: any) {
       console.warn("[AureaRepository.releaseTenant] Guardando en memoria fallback:", err?.message);
     }

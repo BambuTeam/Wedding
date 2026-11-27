@@ -28,6 +28,16 @@ export async function POST(request: NextRequest) {
         paidAmountGTQ: body.paidAmountGTQ ? Number(body.paidAmountGTQ) : undefined,
         currency: body.currency,
         paymentStatus: body.paymentStatus,
+        eventType: body.eventType,
+        themePreset: body.themePreset,
+        title: body.title,
+        eventDate: body.eventDate,
+        startTime: body.startTime,
+        venueCity: body.venueCity,
+        venueName: body.venueName,
+        role: body.role,
+        agencyName: body.agencyName,
+        celebrationType: body.celebrationType,
       });
 
       const cleanPhone = releaseResult.tenant.phone.replace(/[^0-9]/g, "");
@@ -81,8 +91,16 @@ export async function POST(request: NextRequest) {
       email,
       phone,
       role = "COUPLE",
+      agencyName,
       plan = "FIRMA",
       celebrationType = "Boda",
+      eventType,
+      themePreset,
+      title,
+      eventDate,
+      startTime,
+      venueCity,
+      venueName,
       estimatedDate,
       maxGuestsPerEvent = 200,
       amountPaid = 2600,
@@ -100,16 +118,19 @@ export async function POST(request: NextRequest) {
       );
     }
 
+    const effectiveDate = eventDate || estimatedDate;
+
     // Crear solicitud
     const tenant = await AureaRepository.createTenantRequest({
       hostName: clientName,
       email,
       phone,
       celebrationType,
-      estimatedDate,
+      estimatedDate: effectiveDate,
       guestCount: maxGuestsPerEvent,
       plan: plan as PlanType,
       role: role as TenantRole,
+      agencyName,
       notes,
     });
 
@@ -121,6 +142,16 @@ export async function POST(request: NextRequest) {
       paidAmountGTQ: Number(amountPaid) || 2600,
       currency: currency as "GTQ" | "USD",
       paymentStatus: paymentStatus as PaymentStatus,
+      eventType,
+      themePreset,
+      title,
+      eventDate: effectiveDate,
+      startTime,
+      venueCity,
+      venueName,
+      role: role as TenantRole,
+      agencyName,
+      celebrationType,
     });
 
     const cleanPhone = phone.replace(/[^0-9]/g, "");
