@@ -1,10 +1,12 @@
 import { NextResponse } from "next/server";
 import { checkDynamoConnection, TABLE_NAME } from "@/lib/aws/dynamodb";
 import { BUCKET_NAME } from "@/lib/aws/s3";
+import { getAwsConfig } from "@/lib/aws/clients";
 
 export async function GET() {
   try {
     const dynamoCheck = await checkDynamoConnection();
+    const awsConfig = getAwsConfig();
 
     return NextResponse.json({
       success: true,
@@ -16,12 +18,19 @@ export async function GET() {
       },
       s3: {
         bucket: BUCKET_NAME,
-        region: process.env.AWS_REGION || "us-east-1",
+        region: awsConfig.region,
       },
       env: {
-        region: process.env.AWS_REGION || "us-east-1",
-        hasAccessKey: Boolean(process.env.AWS_ACCESS_KEY_ID),
-        hasSecretKey: Boolean(process.env.AWS_SECRET_ACCESS_KEY),
+        region: awsConfig.region,
+        hasAccessKey: Boolean(awsConfig.credentials?.accessKeyId),
+        hasSecretKey: Boolean(awsConfig.credentials?.secretAccessKey),
+        credentialSource: process.env.AUREA_AWS_ACCESS_KEY_ID
+          ? "AUREA_AWS_*"
+          : process.env.APP_AWS_ACCESS_KEY_ID
+          ? "APP_AWS_*"
+          : process.env.AWS_ACCESS_KEY_ID
+          ? "AWS_*"
+          : "none",
       },
     });
   } catch (err: any) {

@@ -1,19 +1,15 @@
 import { DynamoDBClient } from "@aws-sdk/client-dynamodb";
 import { DynamoDBDocumentClient } from "@aws-sdk/lib-dynamodb";
+import { getAwsConfig } from "./clients";
 
-const region = process.env.APP_AWS_REGION || process.env.AWS_REGION || "us-east-1";
-const accessKeyId = process.env.APP_AWS_ACCESS_KEY_ID || process.env.AWS_ACCESS_KEY_ID;
-const secretAccessKey = process.env.APP_AWS_SECRET_ACCESS_KEY || process.env.AWS_SECRET_ACCESS_KEY;
+const { region, credentials } = getAwsConfig();
 
 const clientConfig: { region: string; credentials?: { accessKeyId: string; secretAccessKey: string } } = {
   region,
 };
 
-if (accessKeyId && secretAccessKey) {
-  clientConfig.credentials = {
-    accessKeyId,
-    secretAccessKey,
-  };
+if (credentials) {
+  clientConfig.credentials = credentials;
 }
 
 export const dynamoClient = new DynamoDBClient(clientConfig);

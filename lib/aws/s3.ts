@@ -1,24 +1,24 @@
 import { S3Client, PutObjectCommand, GetObjectCommand } from "@aws-sdk/client-s3";
 import { getSignedUrl } from "@aws-sdk/s3-request-presigner";
+import { getAwsConfig } from "./clients";
 
-const region = process.env.APP_AWS_REGION || process.env.AWS_REGION || "us-east-1";
-const accessKeyId = process.env.APP_AWS_ACCESS_KEY_ID || process.env.AWS_ACCESS_KEY_ID;
-const secretAccessKey = process.env.APP_AWS_SECRET_ACCESS_KEY || process.env.AWS_SECRET_ACCESS_KEY;
+const { region, credentials } = getAwsConfig();
 
 const s3Config: { region: string; credentials?: { accessKeyId: string; secretAccessKey: string } } = {
   region,
 };
 
-if (accessKeyId && secretAccessKey) {
-  s3Config.credentials = {
-    accessKeyId,
-    secretAccessKey,
-  };
+if (credentials) {
+  s3Config.credentials = credentials;
 }
 
 export const s3Client = new S3Client(s3Config);
 
-export const BUCKET_NAME = process.env.S3_BUCKET_NAME || process.env.AWS_S3_BUCKET || "aurea-eventos-media-gt";
+export const BUCKET_NAME =
+  process.env.AUREA_S3_BUCKET ||
+  process.env.S3_BUCKET_NAME ||
+  process.env.AWS_S3_BUCKET ||
+  "aurea-eventos-media-gt";
 
 export interface PresignedUploadResult {
   uploadUrl: string;
