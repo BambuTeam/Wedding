@@ -32,12 +32,11 @@ export const TABLE_NAME = process.env.DYNAMODB_TABLE_NAME || "EventosPlatform";
  */
 export async function checkDynamoConnection(): Promise<{ connected: boolean; table: string; error?: string }> {
   try {
-    const { DescribeTableCommand } = await import("@aws-sdk/client-dynamodb");
-    const cmd = new DescribeTableCommand({ TableName: TABLE_NAME });
-    await dynamoClient.send(cmd);
+    const { ScanCommand } = await import("@aws-sdk/lib-dynamodb");
+    const cmd = new ScanCommand({ TableName: TABLE_NAME, Limit: 1 });
+    await docClient.send(cmd);
     return { connected: true, table: TABLE_NAME };
   } catch (error: any) {
-    // Si la tabla no existe o las credenciales no están configuradas
     return {
       connected: false,
       table: TABLE_NAME,
