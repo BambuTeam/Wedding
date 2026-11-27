@@ -352,9 +352,9 @@ function SculptureCanvas({
 
   return (
     <Canvas
-      shadows
+      shadows="percentage"
       camera={{ position: [0, 0.4, 4.2], fov: 38 }}
-      dpr={[1, 2]}
+      dpr={[1, 1.5]}
       frameloop={isVisible ? "always" : "demand"}
       gl={{
         antialias: true,
@@ -450,7 +450,7 @@ function SculptureCanvas({
         <OrbitControls
           enableZoom={false}
           enablePan={false}
-          autoRotate={true}
+          autoRotate={isVisible}
           autoRotateSpeed={1.2}
           dampingFactor={0.06}
           minPolarAngle={Math.PI / 3}

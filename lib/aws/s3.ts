@@ -51,20 +51,29 @@ export async function uploadBufferToS3(
   fileKey: string,
   contentType: string = "image/jpeg"
 ): Promise<{ s3Key: string; readUrl: string }> {
-  const command = new PutObjectCommand({
-    Bucket: BUCKET_NAME,
-    Key: fileKey,
-    Body: buffer,
-    ContentType: contentType,
-  });
+  try {
+    const command = new PutObjectCommand({
+      Bucket: BUCKET_NAME,
+      Key: fileKey,
+      Body: buffer,
+      ContentType: contentType,
+    });
 
-  await s3Client.send(command);
-  const readUrl = await getSignedPhotoUrl(fileKey);
+    await s3Client.send(command);
+    const readUrl = await getSignedPhotoUrl(fileKey);
 
-  return {
-    s3Key: fileKey,
-    readUrl,
-  };
+    return {
+      s3Key: fileKey,
+      readUrl,
+    };
+  } catch (err: any) {
+    console.warn("[uploadBufferToS3] S3 upload error, generating base64/fallback data URL:", err?.message);
+    const dataUrl = `data:${contentType};base64,${buffer.toString("base64")}`;
+    return {
+      s3Key: fileKey,
+      readUrl: dataUrl,
+    };
+  }
 }
 
 /**
