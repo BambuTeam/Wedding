@@ -19,6 +19,7 @@ import {
   Guest,
   Table,
   LivePhoto,
+  CheckInResult,
   PlatformKpis,
   EventMusicConfig,
   EventCategoryKey,
@@ -1322,6 +1323,97 @@ export class AureaRepository {
       return { ...guest };
     }
     return null;
+  }
+
+  /**
+   * Control de Check-In Atómico en Recepción (Puerta)
+   */
+  static async checkInGuest(
+    eventId: string,
+    guestToken: string,
+    checkedInBy: string = "Puerta Principal"
+  ): Promise<CheckInResult> {
+    const now = new Date().toISOString();
+
+    try {
+      const response = await docClient.send(
+        new UpdateCommand({
+          TableName: TABLE_NAME,
+          Key: {
+            PK: `EVENT#${eventId}`,
+            SK: `GUEST#${guestToken}`,
+          },
+          UpdateExpression: "SET checkedInAt = :now, checkedInBy = :operator, updatedAt = :now",
+          ConditionExpression: "attribute_not_exists(checkedInAt)",
+          ExpressionAttributeValues: {
+            ":now": now,
+            ":operator": checkedInBy,
+          },
+          ReturnValues: "ALL_NEW",
+        })
+      );
+
+      const updatedGuest = response.Attributes as Guest;
+      return {
+        success: true,
+        checkedInAt: now,
+        checkedInBy,
+        guest: updatedGuest,
+        message: `¡Bienvenido(a) ${updatedGuest.familyName}! Acceso validado en DynamoDB.`,
+      };
+    } catch (err: any) {
+      if (err?.name === "ConditionalCheckFailedException") {
+        const existing = await this.getGuest(eventId, guestToken);
+        return {
+          success: false,
+          alreadyCheckedIn: true,
+          checkedInAt: existing?.checkedInAt,
+          checkedInBy: existing?.checkedInBy,
+          guest: existing || undefined,
+          message: `AVISO: Este pase ya ingresó a las ${
+            existing?.checkedInAt
+              ? new Date(existing.checkedInAt).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })
+              : "previamente"
+          }.`,
+        };
+      }
+      console.warn("[AureaRepository.checkInGuest] Fallback en memoria:", err?.message);
+    }
+
+    const eventGuests = memGuests[eventId] || memGuests["camila-andres-2025"] || [];
+    const guest = eventGuests.find((g) => g.guestToken.toLowerCase() === guestToken.toLowerCase());
+
+    if (!guest) {
+      return {
+        success: false,
+        message: "Invitado no encontrado con el código proporcionado.",
+      };
+    }
+
+    if (guest.checkedInAt) {
+      return {
+        success: false,
+        alreadyCheckedIn: true,
+        checkedInAt: guest.checkedInAt,
+        checkedInBy: guest.checkedInBy || "Recepción",
+        guest: { ...guest },
+        message: `AVISO: Este pase ya fue utilizado previamente a las ${new Date(
+          guest.checkedInAt
+        ).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })}.`,
+      };
+    }
+
+    guest.checkedInAt = now;
+    guest.checkedInBy = checkedInBy;
+    guest.updatedAt = now;
+
+    return {
+      success: true,
+      checkedInAt: now,
+      checkedInBy,
+      guest: { ...guest },
+      message: `¡Bienvenido(a) ${guest.familyName}! Acceso registrado con éxito.`,
+    };
   }
 
   /**

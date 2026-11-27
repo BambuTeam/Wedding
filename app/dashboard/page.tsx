@@ -666,6 +666,7 @@ export default function DashboardPage() {
         <CheckInScanner
           guests={guests}
           event={event}
+          tables={tables}
           onCheckInSuccess={() => loadDashboardData()}
         />
       )}

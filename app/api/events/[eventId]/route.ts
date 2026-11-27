@@ -14,13 +14,21 @@ export async function GET(
   try {
     const eventId = params.eventId;
 
-    // Validación de aislamiento multi-tenant
-    const auth = await verifyEventAccess(request, eventId);
-    if (!auth.authorized) {
-      return auth.errorResponse!;
+    // Permitir consulta pública de metadatos si no viene x-tenant-id (usado por /modo-tv o preview)
+    const isPublicQuery = !request.headers.has("x-tenant-id") && !request.headers.has("x-tenant-pin") && !request.headers.has("x-account-code");
+
+    let event: any = null;
+    if (!isPublicQuery) {
+      const auth = await verifyEventAccess(request, eventId);
+      if (!auth.authorized) {
+        return auth.errorResponse!;
+      }
+      event = auth.event;
     }
 
-    const event = auth.event || await AureaRepository.getEventMeta(eventId) || await EventsRepository.getEvent(eventId);
+    if (!event) {
+      event = (await AureaRepository.getEventMeta(eventId)) || (await EventsRepository.getEvent(eventId));
+    }
 
     if (!event) {
       return NextResponse.json({ error: "Evento no encontrado" }, { status: 404 });

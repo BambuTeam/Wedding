@@ -11,18 +11,28 @@ import {
   CheckCircle2,
   RefreshCw,
   Sparkles,
+  Image as ImageIcon,
 } from "lucide-react";
-import { LivePhoto, Guest, EventDashboardStats, EventMeta } from "@/lib/types";
+import { LivePhoto, Guest, EventDashboardStats, EventMeta, EditorialPhoto } from "@/lib/types";
+
+interface CombinedMediaItem {
+  id: string;
+  url: string;
+  author: string;
+  caption?: string;
+  type: "live" | "editorial";
+  timestamp?: string;
+}
 
 function ModoTvContent() {
   const searchParams = useSearchParams();
   const eventId = searchParams.get("eventId") || "camila-andres-2025";
 
   const [eventMeta, setEventMeta] = useState<EventMeta | null>(null);
-  const [photos, setPhotos] = useState<LivePhoto[]>([]);
+  const [mediaItems, setMediaItems] = useState<CombinedMediaItem[]>([]);
   const [recentCheckIns, setRecentCheckIns] = useState<Guest[]>([]);
   const [stats, setStats] = useState<EventDashboardStats | null>(null);
-  const [currentPhotoIdx, setCurrentPhotoIdx] = useState(0);
+  const [currentIdx, setCurrentIdx] = useState(0);
   const [isFullscreen, setIsFullscreen] = useState(false);
   const [currentTime, setCurrentTime] = useState("");
   const [isRefreshing, setIsRefreshing] = useState(false);
@@ -31,17 +41,19 @@ function ModoTvContent() {
   const syncData = useCallback(async (isManual = false) => {
     if (isManual) setIsRefreshing(true);
     try {
-      // 1. Obtener fotos vivas directamente desde el endpoint unificado de fotos
       const [photosRes, syncRes, metaRes] = await Promise.all([
         fetch(`/api/public/events/${eventId}/photos`, { cache: "no-store" }),
         fetch(`/api/events/${eventId}/sync`, { cache: "no-store" }),
         fetch(`/api/events/${eventId}`, { cache: "no-store" }),
       ]);
 
+      let livePhotos: LivePhoto[] = [];
+      let editorialPhotos: EditorialPhoto[] = [];
+
       if (photosRes.ok) {
         const photoData = await photosRes.json();
         if (photoData.photos && Array.isArray(photoData.photos)) {
-          setPhotos(photoData.photos);
+          livePhotos = photoData.photos;
         }
       }
 
@@ -53,34 +65,69 @@ function ModoTvContent() {
 
       if (metaRes.ok) {
         const metaData = await metaRes.json();
-        if (metaData.event) setEventMeta(metaData.event);
+        if (metaData.event) {
+          setEventMeta(metaData.event);
+          if (Array.isArray(metaData.event.editorialPhotos)) {
+            editorialPhotos = metaData.event.editorialPhotos;
+          }
+        }
+      }
+
+      // Fusión de fotos: Fotos en vivo de invitados + Galería de sesión editorial del anfitrión
+      const combined: CombinedMediaItem[] = [];
+
+      // 1. Fotos en vivo de invitados (prioridad reciente)
+      livePhotos.forEach((lp) => {
+        combined.push({
+          id: lp.photoId,
+          url: lp.url,
+          author: lp.author || "Invitado",
+          caption: lp.message || "",
+          type: "live",
+          timestamp: lp.timestamp,
+        });
+      });
+
+      // 2. Fotos de sesión editorial del anfitrión
+      editorialPhotos.forEach((ep) => {
+        combined.push({
+          id: ep.id,
+          url: ep.url,
+          author: "Sesión de los Anfitriones",
+          caption: ep.caption || "",
+          type: "editorial",
+        });
+      });
+
+      if (combined.length > 0) {
+        setMediaItems(combined);
       }
 
       setLastUpdated(new Date().toLocaleTimeString([], { hour: "2-digit", minute: "2-digit", second: "2-digit" }));
     } catch (e) {
-      console.error("TV sync error:", e);
+      console.error("Modo TV sync error:", e);
     } finally {
       if (isManual) setIsRefreshing(false);
     }
   }, [eventId]);
 
-  // Polling cada 8 segundos para sincronización garantizada en tiempo real con S3 / DynamoDB
+  // Polling automático cada 6 segundos para actualización inmediata
   useEffect(() => {
     syncData();
-    const interval = setInterval(() => syncData(false), 8000);
+    const interval = setInterval(() => syncData(false), 6000);
     return () => clearInterval(interval);
   }, [syncData]);
 
-  // Rotación suave del carrusel de fotos cada 6 segundos
+  // Rotación suave con efecto cinematográfico cada 6 segundos
   useEffect(() => {
-    if (photos.length <= 1) return;
+    if (mediaItems.length <= 1) return;
     const timer = setInterval(() => {
-      setCurrentPhotoIdx((prev) => (prev + 1) % photos.length);
+      setCurrentIdx((prev) => (prev + 1) % mediaItems.length);
     }, 6000);
     return () => clearInterval(timer);
-  }, [photos]);
+  }, [mediaItems]);
 
-  // Reloj en tiempo real
+  // Reloj local continuo
   useEffect(() => {
     const updateClock = () => {
       const now = new Date();
@@ -105,13 +152,17 @@ function ModoTvContent() {
     }
   };
 
-  const activePhoto = photos[currentPhotoIdx] || null;
-  const kitUrl = typeof window !== "undefined" ? `${window.location.origin}/invitacion/preview?eventId=${eventId}` : "";
+  const activeMedia = mediaItems[currentIdx] || null;
+
+  // URL exacta apuntando a la invitación pública con scroll al álbum
+  const albumQrUrl = typeof window !== "undefined"
+    ? `${window.location.origin}/invitacion/preview?eventId=${eventId}#album`
+    : "";
 
   return (
     <div className="fixed inset-0 z-50 bg-[#12110F] text-white flex flex-col justify-between overflow-hidden p-6 sm:p-10 select-none font-sans">
-      {/* Top Ambient Bar */}
-      <div className="flex items-center justify-between pb-6 border-b border-white/10 z-20">
+      {/* Top Ambient Bar con padding derecho seguro */}
+      <div className="flex items-center justify-between pb-6 border-b border-white/10 z-20 pr-2 sm:pr-4">
         <div className="flex items-center gap-3">
           <Heart className="w-5 h-5 fill-[#C5A059] text-[#C5A059] animate-pulse shrink-0" />
           <div>
@@ -126,8 +177,8 @@ function ModoTvContent() {
           </div>
         </div>
 
-        <div className="flex items-center gap-4 sm:gap-6">
-          {/* Botón de refresco manual */}
+        <div className="flex items-center gap-3 sm:gap-6 pr-2 sm:pr-4 shrink-0">
+          {/* Botón manual de actualización inmediata */}
           <button
             onClick={() => syncData(true)}
             disabled={isRefreshing}
@@ -142,7 +193,7 @@ function ModoTvContent() {
             <span className="text-2xl sm:text-4xl font-sans font-bold text-[#DFC07D]">
               {currentTime}
             </span>
-            <span className="text-[11px] text-zinc-400 font-sans block">
+            <span className="text-[10px] text-zinc-400 font-sans block tracking-wider uppercase">
               Hora local
             </span>
           </div>
@@ -157,30 +208,39 @@ function ModoTvContent() {
         </div>
       </div>
 
-      {/* Center Stage: Photo Slideshow + Interactive QR */}
-      <div className="flex-1 my-6 grid grid-cols-1 lg:grid-cols-3 gap-8 items-center z-10 overflow-hidden">
-        {/* Left: Slideshow Hero (2 Columns) */}
+      {/* Center Stage: Carrusel Cinematográfico con Ken Burns + Panel QR Seguro */}
+      <div className="flex-1 my-6 grid grid-cols-1 lg:grid-cols-3 gap-8 items-center z-10 overflow-hidden pr-2 sm:pr-4">
+        {/* Left: Slideshow Hero Cinematográfico (2 Columnas) */}
         <div className="lg:col-span-2 relative h-[55vh] lg:h-[65vh] rounded-3xl overflow-hidden bg-[#1E1C1A] border border-[#C5A059]/40 shadow-2xl flex items-center justify-center">
-          {activePhoto ? (
-            <div className="relative w-full h-full">
+          {activeMedia ? (
+            <div key={activeMedia.id || currentIdx} className="relative w-full h-full overflow-hidden">
               <img
-                src={activePhoto.url}
-                alt={activePhoto.author}
-                className="w-full h-full object-cover animate-in fade-in zoom-in-95 duration-1000"
+                src={activeMedia.url}
+                alt={activeMedia.author}
+                className="w-full h-full object-cover transform scale-100 animate-[kenburns_16s_ease-out_infinite_alternate]"
+                style={{
+                  animation: "kenBurnsZoom 8s ease-out forwards",
+                }}
               />
-              <div className="absolute inset-0 bg-gradient-to-t from-black/85 via-black/20 to-transparent" />
+              <div className="absolute inset-0 bg-gradient-to-t from-black/90 via-black/25 to-transparent" />
 
               <div className="absolute bottom-6 left-6 right-6">
                 <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-[#C5A059] text-zinc-950 font-bold text-xs shadow-md mb-2 font-sans">
-                  <Camera className="w-3.5 h-3.5" />
-                  <span>Recuerdo #{currentPhotoIdx + 1} de {photos.length}</span>
+                  {activeMedia.type === "live" ? (
+                    <Camera className="w-3.5 h-3.5" />
+                  ) : (
+                    <ImageIcon className="w-3.5 h-3.5" />
+                  )}
+                  <span>
+                    {activeMedia.type === "live" ? "Recuerdo en Vivo" : "Sesión Editorial"} #{currentIdx + 1} de {mediaItems.length}
+                  </span>
                 </span>
-                <p className="font-serif italic text-2xl sm:text-3xl text-white font-normal">
-                  {activePhoto.author}
+                <p className="font-serif italic text-2xl sm:text-4xl text-white font-normal leading-tight">
+                  {activeMedia.author}
                 </p>
-                {activePhoto.message && (
+                {activeMedia.caption && (
                   <p className="text-[13px] sm:text-base text-zinc-200 mt-1 max-w-xl font-sans leading-relaxed">
-                    &ldquo;{activePhoto.message}&rdquo;
+                    &ldquo;{activeMedia.caption}&rdquo;
                   </p>
                 )}
               </div>
@@ -194,34 +254,34 @@ function ModoTvContent() {
                 Esperando los primeros recuerdos...
               </h3>
               <p className="text-zinc-400 max-w-md mx-auto text-sm">
-                Apunta tu teléfono al código QR de la derecha y sube una fotografía desde tu mesa para verla reflejada aquí al instante.
+                Apunta tu teléfono al código QR de la derecha y comparte una fotografía desde tu mesa para verla proyectada aquí al instante.
               </p>
             </div>
           )}
         </div>
 
-        {/* Right: Interactive Hall QR Code */}
-        <div className="flex flex-col items-center justify-center p-6 rounded-3xl bg-white/5 border border-[#C5A059]/30 backdrop-blur-md shadow-2xl text-center space-y-3">
-          <div className="inline-flex items-center gap-1 px-3 py-1 rounded-full bg-[#DFC07D]/10 text-[#DFC07D] text-xs font-semibold uppercase tracking-widest">
+        {/* Right: Panel QR Seguro con padding holgado para evitar corte en el borde */}
+        <div className="flex flex-col items-center justify-center p-6 sm:p-8 rounded-3xl bg-white/5 border border-[#C5A059]/30 backdrop-blur-md shadow-2xl text-center space-y-3 mr-1 sm:mr-3">
+          <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-[#DFC07D]/15 text-[#DFC07D] text-xs font-semibold uppercase tracking-widest border border-[#DFC07D]/30">
             <Sparkles className="w-3.5 h-3.5" />
-            <span>Álbum Colaborativo S3</span>
+            <span>Participa en Vivo</span>
           </div>
           <h3 className="font-serif text-2xl sm:text-3xl text-white font-normal">
             Sube tus fotos a esta pantalla
           </h3>
 
           <div className="p-4 rounded-2xl bg-white text-zinc-900 shadow-2xl border-4 border-[#C5A059] my-2">
-            <QRCodeSVG value={kitUrl} size={180} level="M" />
+            <QRCodeSVG value={albumQrUrl} size={180} level="M" />
           </div>
 
           <p className="text-[13px] text-zinc-300 max-w-xs font-sans leading-relaxed">
-            Escanea con tu cámara para capturar momentos y compartirlos en vivo sin descargar ninguna aplicación.
+            Escanea con la cámara de tu teléfono para subir tus momentos sin descargar nada.
           </p>
         </div>
       </div>
 
-      {/* Bottom Live Ticker */}
-      <div className="pt-4 border-t border-white/10 flex items-center justify-between text-xs z-20">
+      {/* Bottom Live Ticker con invitados que acaban de ingresar */}
+      <div className="pt-4 border-t border-white/10 flex items-center justify-between text-xs z-20 pr-2 sm:pr-4">
         <div className="flex items-center gap-3 overflow-hidden">
           <div className="flex items-center gap-1.5 px-3 py-1 rounded-full bg-emerald-500/20 text-emerald-300 border border-emerald-500/30 font-sans font-semibold shrink-0">
             <Heart className="w-3.5 h-3.5 fill-emerald-400" />
@@ -241,13 +301,14 @@ function ModoTvContent() {
                 >
                   <CheckCircle2 className="w-3.5 h-3.5 text-emerald-400" />
                   <strong className="text-white">{g.familyName}</strong> ({g.confirmedSeats || g.maxSeats} personas)
+                  {g.tableId && <span className="text-[#DFC07D] text-xs">· Mesa Asignada</span>}
                 </span>
               ))
             )}
           </div>
         </div>
 
-        {/* Stats counter & auto-refresh status */}
+        {/* Contador de estado & auto-refresh */}
         <div className="hidden sm:flex items-center gap-3 text-zinc-400 shrink-0 font-sans text-[13px]">
           {stats && (
             <>
@@ -255,10 +316,21 @@ function ModoTvContent() {
               <span>•</span>
             </>
           )}
-          <span className="text-[#DFC07D] font-medium">{photos.length} fotos proyectadas</span>
+          <span className="text-[#DFC07D] font-medium">{mediaItems.length} recuerdos en rotación</span>
           <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse" title={`Sincronizado: ${lastUpdated}`} />
         </div>
       </div>
+
+      <style jsx global>{`
+        @keyframes kenBurnsZoom {
+          0% {
+            transform: scale(1);
+          }
+          100% {
+            transform: scale(1.08);
+          }
+        }
+      `}</style>
     </div>
   );
 }

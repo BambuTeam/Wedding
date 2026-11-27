@@ -514,33 +514,32 @@ export function EventEmblem3D({ event, slot = "slot_1" }: EditorialSculptureProp
   if (hasFailed) return null;
 
   // -------------------------------------------------------------
-  // POSICIONAMIENTO EN DESKTOP SEGÚN RANURA (Márgenes Alternados z-20)
+  // POSICIONAMIENTO EN DESKTOP (Márgenes Seguros >= 1280px, z-0 para cero superposición)
   // -------------------------------------------------------------
-  let desktopPositionClasses = "right-2 xl:right-8 top-24";
+  let desktopPositionClasses = "-right-24 xl:-right-36 top-16";
   if (piece.position === "top-right") {
-    desktopPositionClasses = "right-2 xl:right-8 top-28";
+    desktopPositionClasses = "-right-24 xl:-right-36 top-20";
   } else if (piece.position === "mid-left") {
-    desktopPositionClasses = "left-2 xl:left-8 top-12";
+    desktopPositionClasses = "-left-24 xl:-left-36 top-12";
   } else if (piece.position === "mid-right") {
-    desktopPositionClasses = "right-2 xl:right-8 top-16";
+    desktopPositionClasses = "-right-24 xl:-right-36 top-16";
   } else if (piece.position === "bottom-left") {
-    desktopPositionClasses = "left-2 xl:left-8 top-8";
+    desktopPositionClasses = "-left-24 xl:-left-36 top-12";
   }
 
-  // Las ranuras 1 y 4 son las piezas maestras que se muestran también en móvil
+  // Las ranuras 1 y 4 se muestran en pantallas menores como separadores dedicados entre bloques
   const isMobileFeatured = slot === "slot_1" || slot === "slot_4";
 
   return (
     <div
       ref={containerRef}
       className="pointer-events-none select-none"
-      style={{ touchAction: "pan-y" }}
     >
-      {/* Vista Desktop: Escultura viva en el margen exterior sin invadir el texto */}
+      {/* Vista Desktop (>= 1280px): Escultura colocada en los márgenes exteriores sin invadir formularios */}
       <div
-        className={`hidden lg:block absolute ${desktopPositionClasses} w-[340px] xl:w-[410px] h-[460px] xl:h-[510px] z-20 pointer-events-auto`}
+        className={`hidden xl:block absolute ${desktopPositionClasses} w-[300px] 2xl:w-[360px] h-[420px] 2xl:h-[480px] z-0 pointer-events-none`}
       >
-        <div className="relative w-full h-full group">
+        <div className="relative w-full h-full pointer-events-none">
           {isIntersecting && (
             <SculptureCanvas
               modelUrl={piece.modelUrl}
@@ -550,32 +549,26 @@ export function EventEmblem3D({ event, slot = "slot_1" }: EditorialSculptureProp
               scrollProgress={scrollProgress}
               isVisible={isIntersecting}
               onLoadFailed={() => setHasFailed(true)}
-              interactive={true}
+              interactive={false}
               showPedestalShadow={false}
             />
           )}
-
-          {/* Micro-insignia discreta al hover */}
-          <div className="absolute bottom-4 right-4 px-3 py-1 rounded-full bg-white/85 backdrop-blur-md border border-[#181715]/10 text-[#7A5C30] text-[10px] font-sans opacity-0 group-hover:opacity-100 transition-opacity flex items-center gap-1.5 pointer-events-none shadow-sm">
-            <RotateCcw className="w-3 h-3 text-[#A88444]" />
-            <span>{piece.name} · 360°</span>
-          </div>
         </div>
       </div>
 
-      {/* Vista Móvil: Solo las piezas destacadas (slot_1 y slot_4) como separadores escultóricos */}
+      {/* Vista Móvil y Tablet (< 1280px): Separador escultórico dedicado con altura propia entre bloques (jamás flotando encima) */}
       {isMobileFeatured && (
-        <div className="lg:hidden my-8 p-5 rounded-3xl bg-gradient-to-b from-[#FAF7F2] to-white border border-[#DFC9A6]/50 shadow-md text-center relative overflow-hidden pointer-events-auto">
+        <div className="xl:hidden my-8 p-4 rounded-3xl bg-gradient-to-b from-[#FAF7F2]/90 to-white/90 border border-[#DFC9A6]/40 text-center relative overflow-hidden pointer-events-none h-48 flex flex-col items-center justify-center">
           {piece.badge && (
-            <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-[#1B2B23] text-[#DFC07D] text-[10px] font-bold uppercase tracking-widest shadow-sm mb-2">
-              <Sparkles className="w-3.5 h-3.5 text-[#C5A059]" />
+            <div className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full bg-[#1B2B23] text-[#DFC07D] text-[9px] font-bold uppercase tracking-widest shadow-sm mb-1">
+              <Sparkles className="w-3 h-3 text-[#C5A059]" />
               <span>{piece.badge}</span>
             </div>
           )}
 
-          <h4 className="font-serif text-2xl text-[#181715] font-normal">{piece.name}</h4>
+          <h4 className="font-serif text-lg text-[#181715] font-normal leading-tight">{piece.name}</h4>
 
-          <div className="relative w-full h-[260px] mx-auto">
+          <div className="relative w-full h-[120px] mx-auto pointer-events-none">
             {isIntersecting && (
               <SculptureCanvas
                 modelUrl={piece.modelUrl}
@@ -585,15 +578,10 @@ export function EventEmblem3D({ event, slot = "slot_1" }: EditorialSculptureProp
                 scrollProgress={scrollProgress}
                 isVisible={isIntersecting}
                 onLoadFailed={() => setHasFailed(true)}
-                interactive={true}
+                interactive={false}
                 showPedestalShadow={true}
               />
             )}
-          </div>
-
-          <div className="inline-flex items-center gap-1.5 text-[10px] text-[#7A5C30] font-sans">
-            <RotateCcw className="w-3 h-3 text-[#A88444]" />
-            <span>Desliza para explorar en 360°</span>
           </div>
         </div>
       )}
