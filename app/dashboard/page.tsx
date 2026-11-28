@@ -19,8 +19,9 @@ import {
   Sparkles,
   CheckCircle2,
   Music,
+  Camera,
 } from "lucide-react";
-import { EventMeta, Guest, Table, EventDashboardStats, Tenant } from "@/lib/types";
+import { EventMeta, Guest, Table, EventDashboardStats, Tenant, LivePhoto } from "@/lib/types";
 import { EventSelector } from "@/components/dashboard/EventSelector";
 import { KpiCards } from "@/components/dashboard/KpiCards";
 import { GuestsTable } from "@/components/dashboard/GuestsTable";
@@ -28,6 +29,7 @@ import { SeatingChart } from "@/components/dashboard/SeatingChart";
 import { CheckInScanner } from "@/components/dashboard/CheckInScanner";
 import { MusicConfigModal } from "@/components/dashboard/MusicConfigModal";
 import { InvitationCustomizer } from "@/components/dashboard/InvitationCustomizer";
+import { LivePhotoModeration } from "@/components/dashboard/LivePhotoModeration";
 import { MOCK_EVENTS, MOCK_GUESTS, MOCK_TABLES } from "@/lib/db/mock-data";
 
 interface SessionState {
@@ -60,9 +62,10 @@ export default function DashboardPage() {
   const [stats, setStats] = useState<EventDashboardStats | null>(null);
   const [guests, setGuests] = useState<Guest[]>([]);
   const [tables, setTables] = useState<Table[]>([]);
+  const [photos, setPhotos] = useState<LivePhoto[]>([]);
   const [loadingData, setLoadingData] = useState(false);
   const [isRefreshing, setIsRefreshing] = useState(false);
-  const [activeTab, setActiveTab] = useState<"invitados" | "mesas" | "recepcion" | "personalizar">("invitados");
+  const [activeTab, setActiveTab] = useState<"invitados" | "mesas" | "recepcion" | "album" | "personalizar">("invitados");
   const [isMusicModalOpen, setIsMusicModalOpen] = useState(false);
 
   // ============================================================================
@@ -207,10 +210,11 @@ export default function DashboardPage() {
     if (accessPin) authHeaders["x-tenant-pin"] = accessPin;
 
     try {
-      const [eventRes, guestsRes, tablesRes] = await Promise.all([
+      const [eventRes, guestsRes, tablesRes, photosRes] = await Promise.all([
         fetch(`/api/events/${selectedEventId}`, { headers: authHeaders }),
         fetch(`/api/events/${selectedEventId}/guests`, { headers: authHeaders }),
         fetch(`/api/events/${selectedEventId}/tables`, { headers: authHeaders }),
+        fetch(`/api/public/events/${selectedEventId}/photos`, { cache: "no-store" }),
       ]);
 
       if (eventRes.status === 403) {
@@ -236,6 +240,13 @@ export default function DashboardPage() {
       if (tablesRes.ok) {
         const tablesData = await tablesRes.json();
         if (tablesData?.tables) foundTables = tablesData.tables;
+      }
+
+      if (photosRes.ok) {
+        const photosData = await photosRes.json();
+        if (Array.isArray(photosData?.photos)) {
+          setPhotos(photosData.photos);
+        }
       }
     } catch (err) {
       console.warn("[loadDashboardData] API fallback:", err);
@@ -281,6 +292,88 @@ export default function DashboardPage() {
       loadDashboardData();
     }
   }, [selectedEventId, loadDashboardData]);
+
+  // Polling automático cada 6s cuando está activa la pestaña de moderación del álbum
+  useEffect(() => {
+    if (activeTab !== "album" || !selectedEventId) return;
+    const interval = setInterval(async () => {
+      try {
+        const res = await fetch(`/api/public/events/${selectedEventId}/photos`, { cache: "no-store" });
+        if (res.ok) {
+          const data = await res.json();
+          if (Array.isArray(data?.photos)) {
+            setPhotos(data.photos);
+          }
+        }
+      } catch {
+        // silent
+      }
+    }, 6000);
+    return () => clearInterval(interval);
+  }, [activeTab, selectedEventId]);
+
+  // Moderación: Eliminar foto en vivo de S3 y DynamoDB
+  const handleDeletePhoto = async (photoId: string): Promise<boolean> => {
+    if (!selectedEventId) return false;
+    const authHeaders: Record<string, string> = {};
+    const tenantIdOrCode =
+      sessionData?.tenant?.accountCode ||
+      sessionData?.tenant?.tenantId ||
+      (typeof window !== "undefined" ? localStorage.getItem("aurea_tenant_account") || localStorage.getItem("aurea_tenant_id") : null);
+    const accessPin =
+      sessionData?.tenant?.accessPin ||
+      (typeof window !== "undefined" ? localStorage.getItem("aurea_access_pin") : null);
+
+    if (tenantIdOrCode) authHeaders["x-tenant-id"] = tenantIdOrCode;
+    if (accessPin) authHeaders["x-tenant-pin"] = accessPin;
+
+    try {
+      const res = await fetch(`/api/events/${selectedEventId}/photos/${photoId}`, {
+        method: "DELETE",
+        headers: authHeaders,
+      });
+      if (res.ok) {
+        setPhotos((prev) => prev.filter((p) => p.photoId !== photoId));
+        return true;
+      }
+      return false;
+    } catch {
+      return false;
+    }
+  };
+
+  // Moderación: Ocultar o mostrar foto del Modo TV Proyector
+  const handleTogglePhotoVisibility = async (photoId: string, hiddenFromTv: boolean): Promise<boolean> => {
+    if (!selectedEventId) return false;
+    const authHeaders: Record<string, string> = { "Content-Type": "application/json" };
+    const tenantIdOrCode =
+      sessionData?.tenant?.accountCode ||
+      sessionData?.tenant?.tenantId ||
+      (typeof window !== "undefined" ? localStorage.getItem("aurea_tenant_account") || localStorage.getItem("aurea_tenant_id") : null);
+    const accessPin =
+      sessionData?.tenant?.accessPin ||
+      (typeof window !== "undefined" ? localStorage.getItem("aurea_access_pin") : null);
+
+    if (tenantIdOrCode) authHeaders["x-tenant-id"] = tenantIdOrCode;
+    if (accessPin) authHeaders["x-tenant-pin"] = accessPin;
+
+    try {
+      const res = await fetch(`/api/events/${selectedEventId}/photos/${photoId}`, {
+        method: "PATCH",
+        headers: authHeaders,
+        body: JSON.stringify({ hiddenFromTv }),
+      });
+      if (res.ok) {
+        setPhotos((prev) =>
+          prev.map((p) => (p.photoId === photoId ? { ...p, hiddenFromTv } : p))
+        );
+        return true;
+      }
+      return false;
+    } catch {
+      return false;
+    }
+  };
 
   // ============================================================================
   // 3. PANTALLAS DE ESTADO: CARGA, PENDIENTE, SUSPENDIDO O LOGIN PIN
@@ -630,6 +723,17 @@ export default function DashboardPage() {
         </button>
 
         <button
+          onClick={() => setActiveTab("album")}
+          className={`px-5 py-2.5 rounded-2xl transition-all flex items-center gap-1.5 ${activeTab === "album"
+              ? "bg-[#1E1C1A] text-white shadow-sm font-bold"
+              : "text-zinc-600 hover:bg-[#FAF7F2]"
+            }`}
+        >
+          <Camera className="w-3.5 h-3.5 text-[#C5A059]" />
+          <span>Álbum en Vivo (Moderación) ({photos.length})</span>
+        </button>
+
+        <button
           onClick={() => setActiveTab("personalizar")}
           className={`px-5 py-2.5 rounded-2xl transition-all flex items-center gap-1.5 ${activeTab === "personalizar"
               ? "bg-[#1E1C1A] text-white shadow-sm font-bold"
@@ -667,11 +771,43 @@ export default function DashboardPage() {
       )}
 
       {activeTab === "recepcion" && (
-        <CheckInScanner
-          guests={guests}
-          event={event}
-          tables={tables}
-          onCheckInSuccess={() => loadDashboardData()}
+        <div className="space-y-6">
+          <div className="p-4 rounded-2xl bg-[#FAF7F2] border border-[#DFC9A6] flex items-center justify-between">
+            <div className="flex items-center gap-3">
+              <div className="w-8 h-8 rounded-full bg-[#C5A059]/20 text-[#7A5C30] flex items-center justify-center">
+                <Camera className="w-4 h-4 text-[#C5A059]" />
+              </div>
+              <div>
+                <p className="text-xs font-bold text-zinc-900">Álbum en Vivo & Proyector TV</p>
+                <p className="text-[11px] text-zinc-500">Hay {photos.length} fotografías compartidas por los invitados.</p>
+              </div>
+            </div>
+            <button
+              onClick={() => setActiveTab("album")}
+              className="px-3.5 py-1.5 rounded-xl bg-[#1E1C1A] text-white text-xs font-semibold hover:bg-black transition-colors"
+            >
+              Moderar Fotos ({photos.length}) →
+            </button>
+          </div>
+
+          <CheckInScanner
+            guests={guests}
+            event={event}
+            tables={tables}
+            onCheckInSuccess={() => loadDashboardData()}
+          />
+        </div>
+      )}
+
+      {activeTab === "album" && (
+        <LivePhotoModeration
+          photos={photos}
+          loading={loadingData}
+          isRefreshing={isRefreshing}
+          eventId={event.eventId}
+          onRefresh={() => loadDashboardData(true)}
+          onDeletePhoto={handleDeletePhoto}
+          onToggleVisibility={handleTogglePhotoVisibility}
         />
       )}
 

@@ -1669,6 +1669,111 @@ export class AureaRepository {
     }
   }
 
+  /**
+   * Elimina una fotografía de DynamoDB y S3 al instante (Moderación manual de anfitrión)
+   */
+  static async deletePhoto(eventId: string, photoId: string): Promise<boolean> {
+    try {
+      const photos = await this.getPhotos(eventId);
+      const targetPhoto = photos.find((p) => p.photoId === photoId);
+
+      // 1. Eliminar archivo de S3 si tiene s3Key
+      if (targetPhoto?.s3Key) {
+        try {
+          const { deleteFileFromS3 } = await import("../aws/s3");
+          await deleteFileFromS3(targetPhoto.s3Key);
+        } catch (err: any) {
+          console.warn("[AureaRepository.deletePhoto] S3 delete warning:", err?.message);
+        }
+      }
+
+      // 2. Eliminar de DynamoDB
+      if (targetPhoto) {
+        const skVariants = [
+          `PHOTO#${targetPhoto.timestamp}#${targetPhoto.photoId}`,
+          `PHOTO#${targetPhoto.timestamp}`,
+          `PHOTO#${targetPhoto.photoId}`,
+          `MEDIA#${photoId}`,
+        ];
+
+        for (const sk of skVariants) {
+          try {
+            await docClient.send(
+              new DeleteCommand({
+                TableName: TABLE_NAME,
+                Key: {
+                  PK: `EVENT#${eventId}`,
+                  SK: sk,
+                },
+              })
+            );
+          } catch {
+            // probar siguiente variante de clave
+          }
+        }
+      }
+
+      // 3. Eliminar de memoria
+      if (memPhotos[eventId]) {
+        memPhotos[eventId] = memPhotos[eventId].filter((p) => p.photoId !== photoId);
+      }
+      if (memPhotos["camila-andres-2025"]) {
+        memPhotos["camila-andres-2025"] = memPhotos["camila-andres-2025"].filter((p) => p.photoId !== photoId);
+      }
+
+      return true;
+    } catch (err: any) {
+      console.error("[AureaRepository.deletePhoto] Error:", err?.message);
+      return false;
+    }
+  }
+
+  /**
+   * Oculta o muestra una fotografía del Modo TV Proyector
+   */
+  static async togglePhotoVisibility(
+    eventId: string,
+    photoId: string,
+    hiddenFromTv: boolean
+  ): Promise<boolean> {
+    try {
+      const photos = await this.getPhotos(eventId);
+      const targetPhoto = photos.find((p) => p.photoId === photoId);
+
+      if (targetPhoto) {
+        targetPhoto.hiddenFromTv = hiddenFromTv;
+        const sk = `PHOTO#${targetPhoto.timestamp}#${targetPhoto.photoId}`;
+        try {
+          await docClient.send(
+            new UpdateCommand({
+              TableName: TABLE_NAME,
+              Key: {
+                PK: `EVENT#${eventId}`,
+                SK: sk,
+              },
+              UpdateExpression: "SET hiddenFromTv = :h",
+              ExpressionAttributeValues: {
+                ":h": hiddenFromTv,
+              },
+            })
+          );
+        } catch {
+          // fallback
+        }
+      }
+
+      if (memPhotos[eventId]) {
+        const found = memPhotos[eventId].find((p) => p.photoId === photoId);
+        if (found) found.hiddenFromTv = hiddenFromTv;
+      }
+
+      return true;
+    } catch (err: any) {
+      console.error("[AureaRepository.togglePhotoVisibility] Error:", err?.message);
+      return false;
+    }
+  }
+
   // ============================================================================
   // 4. PLATFORM KPIS PARA /root
   // ============================================================================

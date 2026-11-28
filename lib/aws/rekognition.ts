@@ -14,34 +14,48 @@ export function getFreshRekognitionClient(): RekognitionClient | null {
   }
 }
 
-// Categorías bloqueadas automáticamente por normas del evento
+// Categorías bloqueadas automáticamente por normas del evento (Umbral estricto 55%)
 const BLOCKED_CATEGORIES = new Set([
+  "Explicit",
   "Explicit Nudity",
-  "Nudity",
+  "Non-Consensual Explicit Content",
   "Suggestive",
+  "Revealing Clothes",
+  "Female Swimwear or Underwear",
+  "Male Swimwear or Underwear",
+  "Partial Nudity",
   "Violence",
   "Visually Disturbing",
   "Rude Gestures",
-  "Hate Symbols",
+  "Drugs & Tobacco",
   "Drugs",
   "Tobacco",
   "Alcohol",
+  "Hate Symbols",
+  "Nudity",
 ]);
 
 export interface ModerationResult {
   isSafe: boolean;
   blockedReason?: string;
   labels?: string[];
+  serviceUnavailable?: boolean;
 }
 
 /**
  * Analiza un buffer de imagen con AWS Rekognition DetectModerationLabelsCommand.
- * Si detecta contenido inapropiado con confianza >= 70%, rechaza la imagen.
+ * Regla Fail-Closed: Si el servicio no está disponible o falla, rechaza la imagen (HTTP 503).
+ * Umbral estricto: MinConfidence: 55.
  */
 export async function moderateImageBuffer(imageBuffer: Buffer): Promise<ModerationResult> {
   const rekognition = getFreshRekognitionClient();
   if (!rekognition) {
-    return { isSafe: true };
+    console.error("[moderateImageBuffer] Rekognition client unavailable - Fail-Closed enforced.");
+    return {
+      isSafe: false,
+      serviceUnavailable: true,
+      blockedReason: "El filtro de seguridad de imágenes no está disponible en este momento. Intenta de nuevo en unos segundos.",
+    };
   }
 
   try {
@@ -49,7 +63,7 @@ export async function moderateImageBuffer(imageBuffer: Buffer): Promise<Moderati
       Image: {
         Bytes: imageBuffer,
       },
-      MinConfidence: 70,
+      MinConfidence: 55,
     });
 
     const response = await rekognition.send(command);
@@ -86,8 +100,12 @@ export async function moderateImageBuffer(imageBuffer: Buffer): Promise<Moderati
       labels: detectedCategories,
     };
   } catch (error: any) {
-    // Si la cuenta/región no tiene habilitado Rekognition o error de permisos, no bloquear el flujo legítimo
-    console.warn("[moderateImageBuffer] Rekognition check warning/fallback:", error?.message);
-    return { isSafe: true };
+    // FAIL-CLOSED: No permitir subida sin comprobación de seguridad garantizada
+    console.error("[moderateImageBuffer] Rekognition check failed (Fail-Closed enforced):", error?.message);
+    return {
+      isSafe: false,
+      serviceUnavailable: true,
+      blockedReason: "El filtro de seguridad de imágenes no está disponible en este momento. Intenta de nuevo en unos segundos.",
+    };
   }
 }

@@ -167,6 +167,7 @@ export interface LivePhoto {
   message?: string;
   timestamp: string;
   likes?: number;
+  hiddenFromTv?: boolean;
 }
 
 export interface CheckInResult {

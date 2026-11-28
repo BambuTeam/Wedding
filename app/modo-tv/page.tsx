@@ -53,7 +53,7 @@ function ModoTvContent() {
       if (photosRes.ok) {
         const photoData = await photosRes.json();
         if (photoData.photos && Array.isArray(photoData.photos)) {
-          livePhotos = photoData.photos;
+          livePhotos = photoData.photos.filter((p: LivePhoto) => !p.hiddenFromTv);
         }
       }
 

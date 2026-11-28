@@ -1,4 +1,4 @@
-import { S3Client, PutObjectCommand, GetObjectCommand } from "@aws-sdk/client-s3";
+import { S3Client, PutObjectCommand, GetObjectCommand, DeleteObjectCommand } from "@aws-sdk/client-s3";
 import { getSignedUrl } from "@aws-sdk/s3-request-presigner";
 import { getAwsConfig } from "./clients";
 
@@ -121,4 +121,21 @@ export async function createPresignedUploadUrl(
     fileKey,
     publicUrl,
   };
+}
+
+/**
+ * Elimina un archivo directamente de S3.
+ */
+export async function deleteFileFromS3(fileKey: string): Promise<boolean> {
+  try {
+    const command = new DeleteObjectCommand({
+      Bucket: BUCKET_NAME,
+      Key: fileKey,
+    });
+    await s3Client.send(command);
+    return true;
+  } catch (err: any) {
+    console.warn("[deleteFileFromS3] Error deleting from S3:", fileKey, err?.message);
+    return false;
+  }
 }

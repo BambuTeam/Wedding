@@ -25,6 +25,56 @@ interface EventInfo {
   category?: string;
 }
 
+interface ErrorBoundaryProps {
+  children: React.ReactNode;
+}
+
+interface ErrorBoundaryState {
+  hasError: boolean;
+  errorMessage?: string;
+}
+
+class SubirErrorBoundary extends React.Component<ErrorBoundaryProps, ErrorBoundaryState> {
+  constructor(props: ErrorBoundaryProps) {
+    super(props);
+    this.state = { hasError: false };
+  }
+
+  static getDerivedStateFromError(error: any): ErrorBoundaryState {
+    return { hasError: true, errorMessage: error?.message || "Error al inicializar la cámara" };
+  }
+
+  componentDidCatch(error: any, errorInfo: any) {
+    console.error("[SubirErrorBoundary] Caught error:", error, errorInfo);
+  }
+
+  render() {
+    if (this.state.hasError) {
+      return (
+        <div className="min-h-screen bg-[#12110F] text-[#F7F4EE] flex flex-col items-center justify-center p-6 text-center space-y-4 font-sans">
+          <div className="w-16 h-16 rounded-full bg-[#DFC38C]/15 border border-[#DFC38C]/40 flex items-center justify-center text-[#DFC38C]">
+            <Camera className="w-8 h-8" />
+          </div>
+          <h2 className="text-xl font-serif text-white">Portal de Fotografía en Vivo</h2>
+          <p className="text-sm text-zinc-400 max-w-sm">
+            Ocurrió un detalle al sincronizar con tu navegador. Haz clic para recargar la cámara.
+          </p>
+          <button
+            onClick={() => {
+              this.setState({ hasError: false });
+              if (typeof window !== "undefined") window.location.reload();
+            }}
+            className="px-6 py-3 rounded-xl bg-[#DFC38C] text-black font-semibold text-sm shadow-lg hover:bg-[#C5A059] transition-colors"
+          >
+            Reintentar y Abrir Cámara
+          </button>
+        </div>
+      );
+    }
+    return this.props.children;
+  }
+}
+
 function SubirFotoExpressInner() {
   const params = useParams();
   const searchParams = useSearchParams();
@@ -154,8 +204,8 @@ function SubirFotoExpressInner() {
         if (Array.isArray(data?.guests)) {
           setGuestList(
             data.guests.map((g: any) => ({
-              name: g.fullName,
-              token: g.guestToken,
+              name: String(g?.fullName ?? g?.familyName ?? g?.name ?? "Invitado"),
+              token: String(g?.guestToken ?? g?.passCode ?? g?.token ?? ""),
             }))
           );
         }
@@ -381,23 +431,27 @@ function SubirFotoExpressInner() {
                     value={guestSearchQuery}
                     onChange={(e) => setGuestSearchQuery(e.target.value)}
                     placeholder="Filtrar por tu nombre o familia..."
-                    className="w-full px-3 py-2 rounded-lg bg-black/40 border border-white/10 text-xs text-white placeholder-zinc-500 focus:outline-none focus:border-[#DFC38C]"
+                    className="w-full px-3 py-2.5 rounded-lg bg-black/40 border border-white/10 text-base text-white placeholder-zinc-500 focus:outline-none focus:border-[#DFC38C]"
                   />
                   <div className="divide-y divide-white/5">
                     {guestList
-                      .filter((g) =>
-                        g.name.toLowerCase().includes(guestSearchQuery.toLowerCase())
-                      )
+                      .filter((g) => {
+                        const query = (guestSearchQuery || "").trim().toLowerCase();
+                        if (!query) return true;
+                        const safeName = String(g?.name ?? "").toLowerCase();
+                        const safeToken = String(g?.token ?? "").toLowerCase();
+                        return safeName.includes(query) || safeToken.includes(query);
+                      })
                       .slice(0, 6)
                       .map((g, idx) => (
                         <button
                           key={idx}
                           type="button"
                           onClick={() => handleSelectGuest(g)}
-                          className="w-full py-2 px-2 text-left text-xs text-zinc-200 hover:bg-white/5 rounded flex items-center justify-between"
+                          className="w-full py-2.5 px-2 text-left text-sm text-zinc-200 hover:bg-white/5 rounded flex items-center justify-between"
                         >
                           <span className="font-medium">{g.name}</span>
-                          <span className="text-[10px] text-[#DFC38C]">Elegir →</span>
+                          <span className="text-xs text-[#DFC38C]">Elegir →</span>
                         </button>
                       ))}
                   </div>
@@ -419,7 +473,7 @@ function SubirFotoExpressInner() {
                   value={manualGuestName}
                   onChange={(e) => setManualGuestName(e.target.value)}
                   placeholder="Tu Nombre y Apellido"
-                  className="w-full px-4 py-3 rounded-xl bg-black/50 border border-white/15 text-sm text-white placeholder-zinc-500 focus:outline-none focus:border-[#DFC38C] transition-all"
+                  className="w-full px-4 py-3 rounded-xl bg-black/50 border border-white/15 text-base text-white placeholder-zinc-500 focus:outline-none focus:border-[#DFC38C] transition-all"
                 />
                 <button
                   type="submit"
@@ -514,7 +568,7 @@ function SubirFotoExpressInner() {
                     value={message}
                     onChange={(e) => setMessage(e.target.value)}
                     placeholder="¡Felicidades por este gran día! Que viva el amor..."
-                    className="w-full px-4 py-2.5 rounded-xl bg-[#181715] border border-white/10 text-xs text-white placeholder-zinc-500 focus:outline-none focus:border-[#DFC38C] resize-none"
+                    className="w-full px-4 py-2.5 rounded-xl bg-[#181715] border border-white/10 text-base text-white placeholder-zinc-500 focus:outline-none focus:border-[#DFC38C] resize-none"
                   />
                 </div>
 
@@ -578,14 +632,16 @@ function SubirFotoExpressInner() {
 
 export default function SubirFotoExpressPage() {
   return (
-    <Suspense
-      fallback={
-        <div className="min-h-screen bg-[#12110F] text-zinc-400 flex items-center justify-center">
-          <Loader2 className="w-8 h-8 animate-spin text-[#DFC38C]" />
-        </div>
-      }
-    >
-      <SubirFotoExpressInner />
-    </Suspense>
+    <SubirErrorBoundary>
+      <Suspense
+        fallback={
+          <div className="min-h-screen bg-[#12110F] text-zinc-400 flex items-center justify-center">
+            <Loader2 className="w-8 h-8 animate-spin text-[#DFC38C]" />
+          </div>
+        }
+      >
+        <SubirFotoExpressInner />
+      </Suspense>
+    </SubirErrorBoundary>
   );
 }
